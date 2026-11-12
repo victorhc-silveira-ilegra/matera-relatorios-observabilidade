@@ -1,7 +1,7 @@
 # Relatórios de Observabilidade (Flagship DTW / Revolut MIP)
 
-[![CI](https://github.com/victorhc-silveira-ilegra/relatorios/actions/workflows/ci.yml/badge.svg)](https://github.com/victorhc-silveira-ilegra/relatorios/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/victorhc-silveira-ilegra/relatorios?display_name=tag&sort=semver)](https://github.com/victorhc-silveira-ilegra/relatorios/releases)
+[![CI](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/actions/workflows/ci.yml/badge.svg)](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/victorhc-silveira-ilegra/matera-relatorios-observabilidade?display_name=tag&sort=semver)](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/releases)
 [![Python](https://img.shields.io/badge/python-3.13%2B-blue?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](pyproject.toml)
 [![Ruff](https://img.shields.io/badge/linter-ruff-D7FF64?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
