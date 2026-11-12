@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.0.0...v1.1.0) (2026-11-12)
+
+### Novas Funcionalidades
+
+* **makefile:** padroniza alvos de relatorios pelo horario de termino com dois pontos ([1f1f2e6](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/1f1f2e670570101a85708a0b6d50d654749a3e92))
+
 ## 1.0.0 (2026-11-12)
 
 ### Novas Funcionalidades
