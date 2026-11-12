@@ -129,9 +129,9 @@ make help
 # ----------------------------------------------------------------------
 # Cadeia de Horários - Flagship (DTW)
 # ----------------------------------------------------------------------
-make report-flagship-0830     # Janela Manhã (08:30–10:30)
-make report-flagship-1030     # Janela Meio-dia (10:30–13:30)
-make report-flagship-1330     # Janela Tarde (13:30–16:30)
+make report-flagship-10:30    # Janela Manhã (08:30–10:30) (alias: report-flagship-1030)
+make report-flagship-13:30    # Janela Meio-dia (10:30–13:30) (alias: report-flagship-1330)
+make report-flagship-16:30    # Janela Tarde (13:30–16:30) (alias: report-flagship-1630)
 make report-flagship-fast     # Execução rápida (bypass RDS via --skip-rds)
 make report-flagship-auto     # Detecta automaticamente a janela pelo relógio
 make report-flagship-all      # Executa sequencialmente toda a cadeia do dia
@@ -139,9 +139,9 @@ make report-flagship-all      # Executa sequencialmente toda a cadeia do dia
 # ----------------------------------------------------------------------
 # Cadeia de Horários - Revolut (MIP)
 # ----------------------------------------------------------------------
-make report-revolut-0830      # Janela Manhã (08:30–10:30)
-make report-revolut-1030      # Janela Meio-dia (10:30–13:30)
-make report-revolut-1330      # Janela Tarde (13:30–16:30)
+make report-revolut-10:30     # Janela Manhã (08:30–10:30) (alias: report-revolut-1030)
+make report-revolut-13:30     # Janela Meio-dia (10:30–13:30) (alias: report-revolut-1330)
+make report-revolut-16:30     # Janela Tarde (13:30–16:30) (alias: report-revolut-1630)
 make report-revolut-auto      # Detecta automaticamente a janela pelo relógio
 make report-revolut-all       # Executa sequencialmente toda a cadeia do dia
 

@@ -24,6 +24,12 @@ runs:
         make -n app-validate
         make -n app-build
         make -n quality
+        make -n report-flagship-10:30
+        make -n report-flagship-13:30
+        make -n report-flagship-16:30
         make -n report-flagship-0830
+        make -n report-revolut-10:30
+        make -n report-revolut-13:30
+        make -n report-revolut-16:30
         make -n report-revolut-0830
         echo "Alvos do Makefile validados com sucesso."

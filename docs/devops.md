@@ -110,18 +110,18 @@ make app-clean            # Limpa caches, builds e artefatos temporarios
 
 # Cadeia Operacional - Flagship (DTW)
 make report-flagship WINDOW=10:30-13:30   # Janela configuravel
-make report-flagship-0830                 # Janela Manha (08:30–10:30)
-make report-flagship-1030                 # Janela Meio-dia (10:30–13:30)
-make report-flagship-1330                 # Janela Tarde (13:30–16:30)
+make report-flagship-10:30                # Janela Manha (08:30–10:30) (alias: report-flagship-1030)
+make report-flagship-13:30                # Janela Meio-dia (10:30–13:30) (alias: report-flagship-1330)
+make report-flagship-16:30                # Janela Tarde (13:30–16:30) (alias: report-flagship-1630)
 make report-flagship-fast                 # Execucao rapida (bypass scraping RDS via --skip-rds)
 make report-flagship-auto                 # Deteccao automatica da janela pelo relogio
 make report-flagship-all                  # Executa toda a cadeia diaria sequencialmente
 
 # Cadeia Operacional - Revolut (MIP)
 make report-revolut WINDOW=10:30-13:30    # Janela configuravel
-make report-revolut-0830                  # Janela Manha (08:30–10:30)
-make report-revolut-1030                  # Janela Meio-dia (10:30–13:30)
-make report-revolut-1330                  # Janela Tarde (13:30–16:30)
+make report-revolut-10:30                 # Janela Manha (08:30–10:30) (alias: report-revolut-1030)
+make report-revolut-13:30                 # Janela Meio-dia (10:30–13:30) (alias: report-revolut-1330)
+make report-revolut-16:30                 # Janela Tarde (13:30–16:30) (alias: report-revolut-1630)
 make report-revolut-auto                  # Deteccao automatica da janela pelo relogio
 make report-revolut-all                   # Executa toda a cadeia diaria sequencialmente
 

@@ -24,9 +24,11 @@ RESET  := \033[0m
 .PHONY: help app-setup app-install app-clean app-quality app-ci app-lint app-security app-test app-tests \
 	app-validate app-build app-format app-dead-code app-audit app-pre-commit app-pre-commit-install app-pre-commit-run \
 	quality ci lint security test tests validate build format dead-code audit setup install clean pre-commit-install pre-commit-run git-init \
-	report-flagship report-flagship-0830 report-flagship-1030 report-flagship-1330 \
+	report-flagship report-flagship-10\:30 report-flagship-13\:30 report-flagship-16\:30 \
+	report-flagship-1030 report-flagship-1330 report-flagship-1630 report-flagship-0830 \
 	report-flagship-fast report-flagship-auto report-flagship-all \
-	report-revolut report-revolut-0830 report-revolut-1030 report-revolut-1330 \
+	report-revolut report-revolut-10\:30 report-revolut-13\:30 report-revolut-16\:30 \
+	report-revolut-1030 report-revolut-1330 report-revolut-1630 report-revolut-0830 \
 	report-revolut-auto report-revolut-all report-all
 
 help:
@@ -39,18 +41,18 @@ help:
 	@echo -e ""
 	@echo -e "$(YELLOW)Cadeia de Horarios - Flagship (DTW):$(RESET)"
 	@echo -e "  $(GREEN)report-flagship$(RESET)         - Gera relatorio Flagship (WINDOW=$(WINDOW))"
-	@echo -e "  $(GREEN)report-flagship-0830$(RESET)    - Janela Manha (08:30–10:30)"
-	@echo -e "  $(GREEN)report-flagship-1030$(RESET)    - Janela Meio-dia (10:30–13:30)"
-	@echo -e "  $(GREEN)report-flagship-1330$(RESET)    - Janela Tarde (13:30–16:30)"
+	@echo -e "  $(GREEN)report-flagship-10:30$(RESET)   - Janela Manha (08:30–10:30) (alias: report-flagship-1030)"
+	@echo -e "  $(GREEN)report-flagship-13:30$(RESET)   - Janela Meio-dia (10:30–13:30) (alias: report-flagship-1330)"
+	@echo -e "  $(GREEN)report-flagship-16:30$(RESET)   - Janela Tarde (13:30–16:30) (alias: report-flagship-1630)"
 	@echo -e "  $(GREEN)report-flagship-fast$(RESET)    - Execucao rapida (bypass scraping RDS via --skip-rds)"
 	@echo -e "  $(GREEN)report-flagship-auto$(RESET)    - Detecta automaticamente a janela pelo relogio"
 	@echo -e "  $(GREEN)report-flagship-all$(RESET)     - Executa sequencialmente toda a cadeia do dia"
 	@echo -e ""
 	@echo -e "$(YELLOW)Cadeia de Horarios - Revolut (MIP):$(RESET)"
 	@echo -e "  $(GREEN)report-revolut$(RESET)          - Gera relatorio Revolut (WINDOW=$(WINDOW))"
-	@echo -e "  $(GREEN)report-revolut-0830$(RESET)     - Janela Manha (08:30–10:30)"
-	@echo -e "  $(GREEN)report-revolut-1030$(RESET)     - Janela Meio-dia (10:30–13:30)"
-	@echo -e "  $(GREEN)report-revolut-1330$(RESET)     - Janela Tarde (13:30–16:30)"
+	@echo -e "  $(GREEN)report-revolut-10:30$(RESET)    - Janela Manha (08:30–10:30) (alias: report-revolut-1030)"
+	@echo -e "  $(GREEN)report-revolut-13:30$(RESET)    - Janela Meio-dia (10:30–13:30) (alias: report-revolut-1330)"
+	@echo -e "  $(GREEN)report-revolut-16:30$(RESET)    - Janela Tarde (13:30–16:30) (alias: report-revolut-1630)"
 	@echo -e "  $(GREEN)report-revolut-auto$(RESET)     - Detecta automaticamente a janela pelo relogio"
 	@echo -e "  $(GREEN)report-revolut-all$(RESET)      - Executa sequencialmente toda a cadeia do dia"
 	@echo -e ""
@@ -84,14 +86,19 @@ report-flagship:
 		--chamados-prd $(CHAMADOS_PRD) \
 		$(if $(OUTPUT),--output $(OUTPUT),)
 
-report-flagship-0830:
+report-flagship-10\:30:
 	$(MAKE) report-flagship WINDOW=08:30-10:30
 
-report-flagship-1030:
+report-flagship-13\:30:
 	$(MAKE) report-flagship WINDOW=10:30-13:30
 
-report-flagship-1330:
+report-flagship-16\:30:
 	$(MAKE) report-flagship WINDOW=13:30-16:30
+
+report-flagship-1030: report-flagship-10\:30
+report-flagship-1330: report-flagship-13\:30
+report-flagship-1630: report-flagship-16\:30
+report-flagship-0830: report-flagship-10\:30
 
 report-flagship-fast:
 	$(MAKE) report-flagship SKIP_RDS=1
@@ -106,11 +113,11 @@ report-flagship-auto:
 
 report-flagship-all:
 	@echo -e "$(CYAN)>>> Executando Cadeia Flagship (08:30-10:30)...$(RESET)"
-	$(MAKE) report-flagship-0830
+	$(MAKE) report-flagship-10:30
 	@echo -e "$(CYAN)>>> Executando Cadeia Flagship (10:30-13:30)...$(RESET)"
-	$(MAKE) report-flagship-1030
+	$(MAKE) report-flagship-13:30
 	@echo -e "$(CYAN)>>> Executando Cadeia Flagship (13:30-16:30)...$(RESET)"
-	$(MAKE) report-flagship-1330
+	$(MAKE) report-flagship-16:30
 
 report-revolut:
 	$(PYTHON) -m app.presentation.cli --client revolut --window $(WINDOW) \
@@ -119,14 +126,19 @@ report-revolut:
 		--chamados $(CHAMADOS) \
 		$(if $(OUTPUT),--output $(OUTPUT),)
 
-report-revolut-0830:
+report-revolut-10\:30:
 	$(MAKE) report-revolut WINDOW=08:30-10:30
 
-report-revolut-1030:
+report-revolut-13\:30:
 	$(MAKE) report-revolut WINDOW=10:30-13:30
 
-report-revolut-1330:
+report-revolut-16\:30:
 	$(MAKE) report-revolut WINDOW=13:30-16:30
+
+report-revolut-1030: report-revolut-10\:30
+report-revolut-1330: report-revolut-13\:30
+report-revolut-1630: report-revolut-16\:30
+report-revolut-0830: report-revolut-10\:30
 
 report-revolut-auto:
 	$(PYTHON) -m app.presentation.cli --client revolut \
@@ -137,11 +149,11 @@ report-revolut-auto:
 
 report-revolut-all:
 	@echo -e "$(CYAN)>>> Executando Cadeia Revolut (08:30-10:30)...$(RESET)"
-	$(MAKE) report-revolut-0830
+	$(MAKE) report-revolut-10:30
 	@echo -e "$(CYAN)>>> Executando Cadeia Revolut (10:30-13:30)...$(RESET)"
-	$(MAKE) report-revolut-1030
+	$(MAKE) report-revolut-13:30
 	@echo -e "$(CYAN)>>> Executando Cadeia Revolut (13:30-16:30)...$(RESET)"
-	$(MAKE) report-revolut-1330
+	$(MAKE) report-revolut-16:30
 
 report-all:
 	@echo -e "$(YELLOW)========================================================================$(RESET)"
