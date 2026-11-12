@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0 (2026-11-12)
+
+### Novas Funcionalidades
+
+* **app:** inicializacao da arquitetura hexagonal, governanca, ci-cd e testes 100% ([cfb3704](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/cfb3704c7284b555d5e9a84bfe3fe3110c07a022))
+
 Todas as mudancas notaveis neste projeto serao documentadas neste arquivo.
 O formato e baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
