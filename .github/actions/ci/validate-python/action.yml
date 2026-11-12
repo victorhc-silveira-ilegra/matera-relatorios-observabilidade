@@ -1,0 +1,23 @@
+name: CI - Python
+description: Matriz crash-first Python via orquestrador de qualidade
+
+runs:
+  using: composite
+  steps:
+    - name: Configurar Python
+      uses: ./.github/actions/ci/setup-python
+    - name: Python | Lint
+      shell: bash
+      run: python scripts/quality_gate.py --stage lint
+    - name: Python | Seguranca
+      shell: bash
+      run: python scripts/quality_gate.py --stage security
+    - name: Python | Testes
+      shell: bash
+      run: python scripts/quality_gate.py --stage test
+    - name: Python | Validate
+      shell: bash
+      run: python scripts/quality_gate.py --stage validate
+    - name: Python | Build
+      shell: bash
+      run: python scripts/quality_gate.py --stage build

@@ -1,0 +1,29 @@
+name: CI - Scripts
+description: Validacao de sintaxe bash e alvos do Makefile
+
+runs:
+  using: composite
+  steps:
+    - name: Validar sintaxe shell (bash -n)
+      shell: bash
+      run: |
+        echo ">>> Validando sintaxe de scripts shell..."
+        find linters/git-hooks -type f -name "*.sh" -exec bash -n {} +
+        if [ -d scripts ]; then
+          find scripts -type f -name "*.sh" -exec bash -n {} +
+        fi
+        echo "Scripts shell validados com sucesso."
+    - name: Validar alvos do Makefile
+      shell: bash
+      run: |
+        echo ">>> Validando alvos do Makefile em dry-run..."
+        make -n app-quality
+        make -n app-lint
+        make -n app-test
+        make -n app-security
+        make -n app-validate
+        make -n app-build
+        make -n quality
+        make -n report-flagship-0830
+        make -n report-revolut-0830
+        echo "Alvos do Makefile validados com sucesso."

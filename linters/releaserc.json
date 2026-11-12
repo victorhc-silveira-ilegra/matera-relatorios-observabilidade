@@ -1,0 +1,60 @@
+{
+  "branches": ["main"],
+  "tagFormat": "v${version}",
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits"
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits",
+        "presetConfig": {
+          "types": [
+            { "type": "feat", "section": "Novas Funcionalidades" },
+            { "type": "fix", "section": "Correções de Bugs" },
+            { "type": "perf", "section": "Melhorias de Performance" },
+            { "type": "revert", "section": "Reversões" },
+            { "type": "docs", "section": "Documentação" },
+            { "type": "style", "section": "Estilos e Formatação", "hidden": true },
+            { "type": "refactor", "section": "Refatorações" },
+            { "type": "test", "section": "Testes", "hidden": true },
+            { "type": "build", "section": "Sistema de Build e Dependências" },
+            { "type": "ci", "section": "Integração Contínua (CI/CD)" },
+            { "type": "chore", "section": "Manutenções Diversas", "hidden": true }
+          ]
+        }
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "docs/CHANGELOG.md",
+        "changelogTitle": "# Changelog"
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "python -c \"from pathlib import Path; p=Path('pyproject.toml'); t=p.read_text(encoding='utf-8'); import re; p.write_text(re.sub(r'^version = \\\".*\\\"', 'version = \\\"${nextRelease.version}\\\"', t, count=1, flags=re.M), encoding='utf-8')\""
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["docs/CHANGELOG.md", "pyproject.toml"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "successComment": false,
+        "failTitle": false
+      }
+    ]
+  ]
+}

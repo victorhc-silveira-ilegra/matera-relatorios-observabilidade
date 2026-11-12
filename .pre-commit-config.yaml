@@ -1,0 +1,57 @@
+minimum_pre_commit_version: "3.5.0"
+
+fail_fast: true
+
+default_language_version:
+  python: python3.13
+
+repos:
+  - repo: local
+    hooks:
+      - id: commitlint
+        name: Commitlint (Conventional Commits)
+        entry: bash linters/git-hooks/commitlint.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit, commit-msg]
+
+      - id: python-lint
+        name: "Python | Lint"
+        entry: linters/git-hooks/bin/python scripts/quality_gate.py --stage lint
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: python-security
+        name: "Python | Seguranca"
+        entry: linters/git-hooks/bin/python scripts/quality_gate.py --stage security
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: python-test
+        name: "Python | Testes"
+        entry: linters/git-hooks/bin/python scripts/quality_gate.py --stage test
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: python-validate
+        name: "Python | Validate"
+        entry: linters/git-hooks/bin/python scripts/quality_gate.py --stage validate
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: python-build
+        name: "Python | Build"
+        entry: linters/git-hooks/bin/python scripts/quality_gate.py --stage build
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]

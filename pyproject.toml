@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=69.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "relatorios-observabilidade"
+version = "0.2.0"
+description = "Gerador de relatórios diários de observabilidade DTW (Flagship) e MIP (Revolut)"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "Ilegra" }]
+dependencies = [
+    "httpx>=0.27.0",
+    "python-dotenv>=1.0.1",
+    "playwright>=1.48.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit>=3.5.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "vulture>=2.16",
+    "bandit>=1.8.0",
+    "pip-audit>=2.10.1",
+    "pytest>=8.3.0",
+    "pytest-cov>=6.0.0",
+    "build>=1.2.2",
+    "wheel>=0.48.0",
+    "setuptools>=69.0",
+]
+
+[project.scripts]
+relatorios = "app.presentation.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = [
+    "--cov=app",
+    "--cov-branch",
+    "--cov-report=term-missing",
+    "--cov-fail-under=100",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "\\.\\.\\.",
+]
+show_missing = true
+fail_under = 100
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["app", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_any_generics = true
+mypy_path = "."
+
+[tool.bandit]
+exclude_dirs = ["tests", "scripts"]
+skips = ["B101", "B404", "B603"]
+
+[tool.vulture]
+min_confidence = 80
+paths = ["app"]

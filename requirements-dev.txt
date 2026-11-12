@@ -1,0 +1,11 @@
+ruff>=0.8.0
+mypy>=1.13.0
+pytest>=8.3.0
+pytest-cov>=6.0.0
+bandit>=1.8.0
+build>=1.2.2
+wheel>=0.48.0
+setuptools>=69.0
+pre-commit>=3.5.0
+vulture>=2.16
+pip-audit>=2.10.1
