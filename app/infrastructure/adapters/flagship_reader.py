@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from app.domain.flagship.models import HmlMetrics, PrdMetrics
 from app.domain.time_window import TimeWindow, WindowCount
 from app.infrastructure.adapters.grafana import (
@@ -35,12 +38,14 @@ class FlagshipMetricsAdapter:
         )
 
     def read_hml(self, window: TimeWindow) -> HmlMetrics:
+        now_brt = datetime.now(ZoneInfo("America/Sao_Paulo"))
+        incident_window = TimeWindow("realtime", now_brt, now_brt) if now_brt > window.end_brt else window
         logs = self._os_hml.fetch_log_distribution(window, extra_filters=None)
         incidents = extract_scalar_from_frames(
             self._gf_hml.query_prometheus(
                 "sum by (topic) (increase(kafka_server_BrokerTopicMetrics_Count"
                 '{name="MessagesInPerSec", topic="hml.dtw.event.incident"}[5h]))',
-                window,
+                incident_window,
                 instant=True,
             )
         )
@@ -90,11 +95,15 @@ class FlagshipMetricsAdapter:
         ]
         api_hits = [WindowCount(w.label, self._os_prd.fetch_count(w, api_filters)) for w in day_windows]
 
+        now_brt = datetime.now(ZoneInfo("America/Sao_Paulo"))
+        incident_window = (
+            TimeWindow("realtime", now_brt, now_brt) if now_brt > current_window.end_brt else current_window
+        )
         incidents = extract_scalar_from_frames(
             self._gf_prd.query_prometheus(
                 "sum by (topic) (increase(kafka_server_BrokerTopicMetrics_Count"
                 '{name="MessagesInPerSec", topic="prod.dtw.event.incident"}[30m]))',
-                current_window,
+                incident_window,
                 instant=True,
             )
         )
