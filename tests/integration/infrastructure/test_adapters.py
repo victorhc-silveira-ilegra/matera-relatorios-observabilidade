@@ -149,9 +149,6 @@ def test_flagship_and_revolut_adapters(monkeypatch: pytest.MonkeyPatch) -> None:
     fl = fl_mod.FlagshipMetricsAdapter(settings)
     assert fl.read_hml(w1).logs.total == 10
     assert fl.read_prd(w1, [w1]).saga_total == 0
-    w_future = build_time_window(date(2099, 1, 1), "13:30-16:30")
-    assert fl.read_hml(w_future).logs.total == 10
-    assert fl.read_prd(w_future, [w_future]).saga_total == 0
 
     rv = rv_mod.RevolutMetricsAdapter(settings)
     rep1 = rv.read_revolut(w1, [w1], "V", "Sem ocorrências.")
@@ -193,8 +190,6 @@ def test_flagship_and_revolut_adapters(monkeypatch: pytest.MonkeyPatch) -> None:
     assert len(rv_clean.read_revolut(w1, [w1], "V", "Sem ocorrências.").services_with_errors) == 0
 
     monkeypatch.setattr(rv_mod, "GrafanaClient", FakeGF)
-    w_future = build_time_window(date(2099, 1, 1), "13:30-16:30")
-    assert len(rv.read_revolut(w_future, [w_future], "V", "Sem ocorrências.").services_without_errors) == 12
     assert "16:30h" in rv.read_revolut(w2, [w1, w2], "V", "Sem ocorrências.").next_analysis_label
     assert "proximo" in rv.read_revolut(w3, [w1, w2, w3], "V", "Sem ocorrências.").next_analysis_label.replace("ó", "o")
 

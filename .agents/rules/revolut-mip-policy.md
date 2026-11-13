@@ -48,13 +48,12 @@ O cluster MIP monitora 12 servicos de mensageria e processamento SPI:
 ### Metrica Coletada
 Os valores numericos ao lado de cada servico representam taxas de operacao (requisicoes por segundo ou volume medio de processamento/logs).
 
-### Gatilho Progressivo de Validacao (M15 -> M5 / M1 / Atual)
+### Gatilho Progressivo de Validacao (M15 -> M5 / M1)
 1. **Janela Inicial (`[15m]`):** Coleta a media dos ultimos 15 minutos que antecedem o fechamento da janela.
-2. **Avaliacao de Spike:** Se a taxa registrada em `[15m]` for $\ge 50.0$ (`LOG_SPIKE_TRIGGER_THRESHOLD`), o coletor dispara verificacao progressiva em janelas mais recentes:
+2. **Avaliacao de Spike:** Se a taxa registrada em `[15m]` for $\ge 50.0$ (`LOG_SPIKE_TRIGGER_THRESHOLD`), o coletor dispara verificacao progressiva estritamente no fechamento da janela:
    - Consulta `[5m]` imediatamente anterior ao fechamento da janela.
    - Consulta valor pontual mais recente da janela (`[1m]`).
-   - Se a execucao ocorrer apos o encerramento da janela (`now > end_brt`), consulta tambem o valor pontual em tempo real (`[1m]` no instante corrente).
-3. **Normalizacao:** Se `M5 < 100.0` (`LOG_M5_NORMALIZED_MAX`) e `min(M1_janela, M1_tempo_real) < 25.0` (`LOG_CURR_NORMALIZED_MAX`), o servico e considerado normalizado. O valor adotado no relatorio e o valor efetivo estabilizado, sem tags poluidoras no texto e com classificacao em **✅ Sem Erros**.
+3. **Normalizacao:** Se `M5 < 100.0` (`LOG_M5_NORMALIZED_MAX`) e `M1 < 25.0` (`LOG_CURR_NORMALIZED_MAX`), o servico e considerado normalizado. O valor adotado no relatorio e o valor efetivo estabilizado (`M1`), sem tags poluidoras no texto e com classificacao em **✅ Sem Erros**.
 4. **Criterio para 🔴 Com Erros:** Apenas servicos com taxa elevada sustentada que nao atendam aos criterios de normalizacao migram para `🔴 Com Erros`.
 
 ---

@@ -30,9 +30,8 @@ Janelas cumulativas de erros (`routing_errors`) e chamadas de API (`api_hits`) e
 - **Logs de Erro por Servico (`OpenSearch PRD`)**:
   - `cc-integration-event-routing-entry-producer`: Contagem de logs `ERROR` por janela horaria do dia.
   - `dtw-transaction-api` (API Hits): Contagem de logs com mensagem `Check the difference between the delta and physical balance table on account`.
-- **Incidentes (`Grafana PRD`, Dashboard `OCgyltPVk`, Painel 6)**: Mede a taxa recente nos **ultimos 30 minutos** (`[30m]`):
+- **Incidentes (`Grafana PRD`, Dashboard `OCgyltPVk`, Painel 6)**: Mede a taxa nos **ultimos 30 minutos** (`[30m]`) avaliada estritamente no fechamento da janela (`end_brt`), sem fallback para tempo real:
   `sum by (topic) (increase(kafka_server_BrokerTopicMetrics_Count{name="MessagesInPerSec", topic="prod.dtw.event.incident"}[30m]))`
-  Caso a emissao do relatorio ocorra apos o encerramento da janela (`now > end_brt`), a avaliacao e realizada no instante de tempo real (`now`) para espelhar com exatidao o valor visualizado na tela do Grafana pelo operador.
 - **Restarts de Pods (`Grafana PRD`)**: Janela pontual de 1 minuto no fechamento da janela (`[1m]`).
 - **Integracao SAGA (`Grafana PRD`, MySQL `4hs8MXdIz`)**:
   - `Total de integracoes`: `select count(*) from STDIN_CONTROLE_SAGA_INTEGRACAO where integrated = 'N'`.
