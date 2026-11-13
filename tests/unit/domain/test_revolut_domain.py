@@ -67,6 +67,22 @@ def test_format_revolut_report_warning_and_critical() -> None:
     assert "Ambiente em atenção 🟡" in rendered_warn
     assert "spi-addressing-queues" in rendered_warn
 
+    service_warn_data = RevolutReportData(
+        date_full="13/11/2026",
+        period_label="13:30h - 16:30h",
+        current_window_label="13:30–16:30",
+        pagador_latency=RevolutLatency(p50_seconds=0.25, p95_seconds=0.63),
+        recebedor_latency=RevolutLatency(p50_seconds=0.88, p95_seconds=1.44),
+        services_with_errors=[RevolutServiceError("spi-dispute", 223.7)],
+        services_without_errors=[RevolutServiceError("spi-main", 26.4)],
+        chamados="Sem ocorrências.",
+        next_analysis_label="16/11/2026 às 10:30h",
+    )
+    rendered_service_warn = format_revolut_report(service_warn_data)
+    assert "Ambiente em atenção 🟡" in rendered_service_warn
+    assert "Identificados 1 serviço(s) com erros nos logs em acompanhamento contínuo." in rendered_service_warn
+    assert "13:30h - 16:30h  🟡         0                   Não" in rendered_service_warn
+
     crit_data = RevolutReportData(
         date_full="12/11/2026",
         period_label="08:30h - 10:30h",

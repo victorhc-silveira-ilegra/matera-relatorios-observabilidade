@@ -55,18 +55,23 @@ def format_revolut_report(data: RevolutReportData) -> str:
 
     all_latencies_ok = all(b == "✅" for b in (pag_p50_badge, pag_p95_badge, rec_p50_badge, rec_p95_badge))
     has_critical_latency = any(b == "🔴" for b in (pag_p50_badge, pag_p95_badge, rec_p50_badge, rec_p95_badge))
-
-    if err_count > 0 or has_critical_latency:
-        status_line = "Ambiente instável 🔴 (Ocorrências críticas identificadas no período)."
-        eventos_line = f"Identificados {err_count} serviço(s) com erros nos logs ou latência fora do limite crítico."
-        period_badge = "🔴"
-    elif not all_latencies_ok or data.chamados.strip().lower().rstrip(".") not in {
+    has_ticket = data.chamados.strip().lower().rstrip(".") not in {
         "sem ocorrências",
         "sem ocorrencias",
         "",
-    }:
-        status_line = "Ambiente em atenção 🟡 (Desvio pontual de latência ou chamado ativo em acompanhamento)."
-        eventos_line = "Monitoramento ativo para desvios pontuais de latência ou chamados abertos."
+    }
+
+    if has_critical_latency:
+        status_line = "Ambiente instável 🔴 (Ocorrências críticas identificadas no período)."
+        eventos_line = f"Identificados {err_count} serviço(s) com erros nos logs ou latência fora do limite crítico."
+        period_badge = "🔴"
+    elif err_count > 0 or not all_latencies_ok or has_ticket:
+        if err_count > 0:
+            status_line = "Ambiente em atenção 🟡 (Ocorrências nos logs identificadas no período em acompanhamento)."
+            eventos_line = f"Identificados {err_count} serviço(s) com erros nos logs em acompanhamento contínuo."
+        else:
+            status_line = "Ambiente em atenção 🟡 (Desvio pontual de latência ou chamado ativo em acompanhamento)."
+            eventos_line = "Monitoramento ativo para desvios pontuais de latência ou chamados abertos."
         period_badge = "🟡"
     else:
         status_line = (

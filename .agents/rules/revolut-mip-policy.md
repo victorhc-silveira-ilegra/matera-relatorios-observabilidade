@@ -66,3 +66,12 @@ As contagens de transacoes sao aproximadas e acumuladas por bloco de horario do 
 - `13:30 a 16:30`
 
 O relatorio acumula os valores historicos do dia ate a janela corrente.
+
+---
+
+## 5. Classificacao do Status Geral do Ambiente
+
+A avaliacao de saude do ambiente Revolut segue o principio de proporcionalidade ao impacto:
+1. **Ambiente estavel ✅**: Ausencia de erros nos logs dos 12 servicos SPI, latencias Pagador/Recebedor dentro dos tetos operacionais e sem chamados ativos.
+2. **Ambiente em atencao 🟡**: Presenca de servicos com ocorrencias nos logs (`🔴 Com Erros`), desvios pontuais de latencia sem violacao critica ou chamados abertos em acompanhamento.
+3. **Ambiente instavel 🔴**: Latencias violando limites criticos (`has_critical_latency`) ou incidentes graves reportados por clientes.
