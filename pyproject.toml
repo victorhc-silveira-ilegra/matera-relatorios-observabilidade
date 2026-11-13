@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "relatorios-observabilidade"
-version = "1.1.0"
+version = "1.1.1"
 description = "Gerador de relatórios diários de observabilidade DTW (Flagship) e MIP (Revolut)"
 requires-python = ">=3.11"
 license = { text = "Proprietary" }

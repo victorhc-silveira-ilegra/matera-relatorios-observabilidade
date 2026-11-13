@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.1](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.0...v1.1.1) (2026-11-13)
+
+### Correções de Bugs
+
+* **revolut:** ajusta status para atencao quando houver erros de logs sem degradacao critica de latencia ([a9a52b9](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/a9a52b9d98cf694afa2d52aabe6ff0fc36c31538))
+* **revolut:** implementa normalizacao progressiva de logs para m5 e atual ([d63272f](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/d63272f11d143b8eb9083634f14d5f6a260c6211))
+
+### Documentação
+
+* **docs:** atualiza links dos badges de ci e release para o repositorio correto ([3eedc07](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/3eedc07371d44fc65a7f72ffb1cc4149aa0ca5eb))
+
 ## [1.1.0](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.0.0...v1.1.0) (2026-11-12)
 
 ### Novas Funcionalidades
