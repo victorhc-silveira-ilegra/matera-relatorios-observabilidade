@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.2...v1.1.3) (2026-11-13)
+
+### Correções de Bugs
+
+* **app:** remove fallbacks ao vivo e fixa janelas estritas de tempo ([34a1d8b](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/34a1d8b17f56c78f1a8a3b1797fde00100ce1325))
+
 ## [1.1.2](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.1...v1.1.2) (2026-11-13)
 
 ### Correções de Bugs
