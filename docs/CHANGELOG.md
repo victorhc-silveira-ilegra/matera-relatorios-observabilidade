@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.1...v1.1.2) (2026-11-13)
+
+### Correções de Bugs
+
+* **flagship:** avalia incidentes em tempo real quando emissao ocorre pos janela ([2af9762](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/2af976237d823c1965295fb1244aec83e573571b))
+
 ## [1.1.1](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.0...v1.1.1) (2026-11-13)
 
 ### Correções de Bugs
