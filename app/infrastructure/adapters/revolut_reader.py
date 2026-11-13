@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from app.domain.revolut.models import (
@@ -7,7 +8,7 @@ from app.domain.revolut.models import (
     RevolutReportData,
     RevolutServiceError,
 )
-from app.domain.time_window import TimeWindow, WindowCount
+from app.domain.time_window import BRT, TimeWindow, WindowCount
 from app.infrastructure.adapters.grafana import (
     GrafanaClient,
     clean_float,
@@ -32,7 +33,9 @@ SPI_SERVICES: list[str] = [
     "spi-qrcodes2",
 ]
 
-LOG_ERROR_ALERT_THRESHOLD = 100.0
+LOG_SPIKE_TRIGGER_THRESHOLD = 50.0
+LOG_M5_NORMALIZED_MAX = 100.0
+LOG_CURR_NORMALIZED_MAX = 25.0
 
 
 def extract_services_map(frames: list[dict[str, Any]]) -> dict[str, float]:
@@ -139,16 +142,18 @@ class RevolutMetricsAdapter:
             recebedor_pix.append(WindowCount(w_label, int(round(rec_val or 0))))
             pagador_pix.append(WindowCount(w_label, int(round(pag_val or 0))))
 
+        now_brt = datetime.now(BRT)
         err_frames = self._gf.query_prometheus(
             f'sum by (service) (increase(logback_events_total{{namespace="{NAMESPACE}", level="error"}}[15m]))',
             current_window,
             instant=True,
         )
         svc_map = extract_services_map(err_frames)
-        has_alert = any(val >= LOG_ERROR_ALERT_THRESHOLD for val in svc_map.values())
+        has_alert = any(val >= LOG_SPIKE_TRIGGER_THRESHOLD for val in svc_map.values())
 
         svc_map_m5: dict[str, float] = {}
         svc_map_curr: dict[str, float] = {}
+        svc_map_realtime: dict[str, float] = {}
 
         if has_alert:
             f_m5 = self._gf.query_prometheus(
@@ -164,16 +169,27 @@ class RevolutMetricsAdapter:
             svc_map_m5 = extract_services_map(f_m5)
             svc_map_curr = extract_services_map(f_curr)
 
+            if now_brt > current_window.end_brt:
+                realtime_tw = TimeWindow("realtime", now_brt, now_brt)
+                f_realtime = self._gf.query_prometheus(
+                    f'sum by (service) (increase(logback_events_total{{namespace="{NAMESPACE}", level="error"}}[1m]))',
+                    realtime_tw,
+                    instant=True,
+                )
+                svc_map_realtime = extract_services_map(f_realtime)
+
         with_errors: list[RevolutServiceError] = []
         without_errors: list[RevolutServiceError] = []
         for svc in SPI_SERVICES:
             val = svc_map.get(svc, 0.0)
-            if val >= LOG_ERROR_ALERT_THRESHOLD:
+            if val >= LOG_SPIKE_TRIGGER_THRESHOLD:
                 v_m5 = svc_map_m5.get(svc, 0.0)
                 v_curr = svc_map_curr.get(svc, 0.0)
-                is_normalized = (v_m5 < LOG_ERROR_ALERT_THRESHOLD / 2) and (v_curr < 10.0)
+                v_rt = svc_map_realtime.get(svc, v_curr)
+                effective_curr = min(v_curr, v_rt)
+                is_normalized = (v_m5 < LOG_M5_NORMALIZED_MAX) and (effective_curr < LOG_CURR_NORMALIZED_MAX)
                 if is_normalized:
-                    without_errors.append(RevolutServiceError(service=svc, value=v_curr))
+                    without_errors.append(RevolutServiceError(service=svc, value=effective_curr))
                 else:
                     with_errors.append(RevolutServiceError(service=svc, value=val))
             else:
