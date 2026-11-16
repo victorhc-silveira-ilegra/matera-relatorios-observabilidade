@@ -41,6 +41,7 @@ export default {
         "reports",
         "revolut",
         "scripts",
+        "settings",
         "tests",
       ],
     ],

@@ -49,7 +49,7 @@ A validacao local e de CI executa estritamente os 5 estagios abaixo na ordem exa
   ```text
   <tipo>(<escopo>): <descricao em letras minusculas>
   ```
-- **Escopos Permitidos**: `app`, `application`, `ci`, `deps`, `docs`, `domain`, `flagship`, `harness`, `hooks`, `infra`, `linters`, `makefile`, `presentation`, `release`, `reports`, `revolut`, `scripts`, `tests`.
+- **Escopos Permitidos**: `app`, `application`, `ci`, `deps`, `docs`, `domain`, `flagship`, `harness`, `hooks`, `infra`, `linters`, `makefile`, `presentation`, `release`, `reports`, `revolut`, `scripts`, `settings`, `tests`.
 - **Exemplos Canônicos**:
   ```text
   feat(flagship): ajusta limiar de integracoes saga para ambiente estavel

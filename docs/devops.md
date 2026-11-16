@@ -43,7 +43,7 @@ O projeto utiliza `pre-commit` e `commitlint` para assegurar que nenhum commit q
 
 - **Instalacao:** `make app-pre-commit` (ou `bash linters/git-hooks/install.sh`).
 - **Hook `commit-msg`:** Executa o `commitlint` via `npx`, garantindo mensagens no padrao Conventional Commits em portugues com **escopo semantico obrigatorio** (`<tipo>(<escopo>): <descricao>`). Mensagens sem escopo sao bloqueadas imediatamente.
-- **Escopos Permitidos:** `app`, `application`, `ci`, `deps`, `docs`, `domain`, `flagship`, `harness`, `hooks`, `infra`, `linters`, `makefile`, `presentation`, `release`, `reports`, `revolut`, `scripts`, `tests`.
+- **Escopos Permitidos:** `app`, `application`, `ci`, `deps`, `docs`, `domain`, `flagship`, `harness`, `hooks`, `infra`, `linters`, `makefile`, `presentation`, `release`, `reports`, `revolut`, `scripts`, `settings`, `tests`.
 - **Hook `pre-commit`:** Executa a Matriz de 5 Estagios (`python-lint`, `python-security`, `python-test`, `python-validate`, `python-build`).
 
 ---
