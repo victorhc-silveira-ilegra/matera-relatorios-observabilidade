@@ -58,12 +58,15 @@ def test_format_report_matches_template() -> None:
     )
 
     rendered = format_flagship_report(data)
-    assert "📊 RELATÓRIO DTW — 11/11 às 16:30h" in rendered
+    assert "*📊 RELATÓRIO DTW — 11/11 às 16:30h*" in rendered
+    assert "*🏥 SAÚDE DO DTW*" in rendered
     assert "🔴 ERROR: 0.05% (4.561)" in rendered
     assert "Registros PROCESSED: 1.217.407 🟢" in rendered
-    assert "Incidentes (últimas 5h): No Data" in rendered
-    assert "Restarts de pods (últimas 6h):" in rendered
+    assert "Incidentes (últimos 30 min): No Data" in rendered
+    assert "Restarts:" in rendered
+    assert "- cc-integ-acc-ev-consumer-instvld (Restarts = 3)" in rendered
     assert "Incidentes (últimos 30 min): 14.2 🟢" in rendered
+    assert "Lag:" not in rendered
     assert "conciliation-1: No Data" in rendered
     assert "Produção (PRD): 🟢 Estável" in rendered
     assert "Homologação (HML): 🟡 Atenção" in rendered
@@ -74,7 +77,15 @@ def test_format_report_variants() -> None:
         date_label="12/11",
         hour_label="10:30h",
         window_label="08:30–10:30",
-        prd=PrdMetrics(lag=1200.0, polling_total=12000, saga_total=15, saga_above_5m=1),
+        hml=HmlMetrics(lag=1500.0, incidents=60.0),
+        prd=PrdMetrics(
+            lag=1200.0,
+            polling_processed=9000000,
+            polling_total=12000,
+            saga_total=15,
+            saga_above_5m=1,
+            incidents=80.0,
+        ),
         rds=RdsMetrics(
             peaks_above_90=[
                 RdsInstanceCpu("db-1", 80.0, 92.0, points_above_90=1),
@@ -85,6 +96,10 @@ def test_format_report_variants() -> None:
     )
     rendered = format_flagship_report(data)
     assert "1.200 🔴" in rendered
+    assert "1.500 🔴" in rendered
+    assert "Registros PROCESSED: 9.000.000 🟡" in rendered
+    assert "Incidentes (últimos 30 min): 60 🟡" in rendered
+    assert "Incidentes (últimos 30 min): 80 🟡" in rendered
     assert "db-1: 92.000% 🟡" in rendered
     assert "db-2: 96.000% 🔴" in rendered
     assert "Total de integrações: 15 🟡" in rendered
@@ -95,9 +110,11 @@ def test_format_report_variants() -> None:
         date_label="12/11",
         hour_label="10:30h",
         window_label="08:30–10:30",
-        prd=PrdMetrics(lag=50.0, polling_total=200),
+        hml=HmlMetrics(lag=50.0),
+        prd=PrdMetrics(lag=50.0, polling_processed=11000000, polling_total=200),
         rds=RdsMetrics(error="Falha RDS"),
     )
     rendered_err = format_flagship_report(data_err)
     assert "Erro na coleta: Falha RDS" in rendered_err
     assert "50 🟡" in rendered_err
+    assert "Registros PROCESSED: 11.000.000 🔴" in rendered_err

@@ -72,6 +72,10 @@ def test_prd_warning_branches() -> None:
     d7.prd.saga_total = 2
     assert evaluate_prd_status(d7).level is HealthLevel.STABLE
 
+    d8 = _healthy_report()
+    d8.prd.polling_processed = 9000000
+    assert evaluate_prd_status(d8).level is HealthLevel.WARNING
+
 
 def test_prd_critical_branches() -> None:
     d1 = _healthy_report()
@@ -83,7 +87,7 @@ def test_prd_critical_branches() -> None:
     assert evaluate_prd_status(d2).level is HealthLevel.CRITICAL
 
     d3 = _healthy_report()
-    d3.prd.lag = 1500.0
+    d3.prd.lag = 1000.0
     assert evaluate_prd_status(d3).level is HealthLevel.CRITICAL
 
     d4 = _healthy_report()
@@ -94,6 +98,18 @@ def test_prd_critical_branches() -> None:
     d5.prd.logs = LogDistribution(total=100, counts={"INFO": 40, "ERROR": 60})
     d5.prd.polling_total = 10000
     assert evaluate_prd_status(d5).level is HealthLevel.CRITICAL
+
+    d6 = _healthy_report()
+    d6.prd.saga_total = 105
+    assert evaluate_prd_status(d6).level is HealthLevel.CRITICAL
+
+    d7 = _healthy_report()
+    d7.prd.logs = LogDistribution(total=100, counts={"INFO": 75, "ERROR": 25})
+    assert evaluate_prd_status(d7).level is HealthLevel.CRITICAL
+
+    d8 = _healthy_report()
+    d8.prd.polling_processed = 11000000
+    assert evaluate_prd_status(d8).level is HealthLevel.CRITICAL
 
 
 def test_hml_warning_and_critical_branches() -> None:
@@ -106,7 +122,15 @@ def test_hml_warning_and_critical_branches() -> None:
     d1.chamados_hml = "INC-1"
     assert evaluate_hml_status(d1).level is HealthLevel.WARNING
 
+    d_hml_rst = _healthy_report()
+    d_hml_rst.hml.restarts = [PodRestart("pod-h", 4.0)]
+    assert evaluate_hml_status(d_hml_rst).level is HealthLevel.WARNING
+
+    d_hml_rst_low = _healthy_report()
+    d_hml_rst_low.hml.restarts = [PodRestart("pod-h", 1.0)]
+    assert evaluate_hml_status(d_hml_rst_low).level is HealthLevel.WARNING
+
     d2 = _healthy_report()
-    d2.hml.lag = 1500.0
+    d2.hml.lag = 1000.0
     d2.hml.restarts = [PodRestart("pod-h", 4.0)]
     assert evaluate_hml_status(d2).level is HealthLevel.CRITICAL

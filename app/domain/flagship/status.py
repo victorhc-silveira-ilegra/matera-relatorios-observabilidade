@@ -10,13 +10,16 @@ LAG_CRITICAL_THRESHOLD = 1000.0
 RESTART_CRITICAL_THRESHOLD = 3.0
 POLLING_WARNING_THRESHOLD = 100
 POLLING_CRITICAL_THRESHOLD = 10000
+POLLING_PROCESSED_WARNING_THRESHOLD = 8_500_000
+POLLING_PROCESSED_CRITICAL_THRESHOLD = 10_500_000
 RDS_SUSTAINED_POINTS = 3
 PRD_ERROR_WARNING_PCT = 5.0
-PRD_ERROR_CRITICAL_PCT = 50.0
+PRD_ERROR_CRITICAL_PCT = 20.0
 PRD_WARN_WARNING_PCT = 20.0
 ROUTING_ERROR_WARNING_THRESHOLD = 10
 API_HITS_WARNING_THRESHOLD = 10
 SAGA_WARNING_THRESHOLD = 10
+SAGA_CRITICAL_THRESHOLD = 100
 
 
 class HealthLevel(StrEnum):
@@ -84,8 +87,16 @@ def evaluate_prd_status(data: FlagshipReportData) -> EnvironmentStatus:
 
     if prd.saga_above_5m and prd.saga_above_5m > 0:
         critical_reasons.append(f"SAGA > 5 min ({prd.saga_above_5m})")
+    elif prd.saga_total and prd.saga_total >= SAGA_CRITICAL_THRESHOLD:
+        critical_reasons.append(f"Fila SAGA crítica ({prd.saga_total})")
     elif prd.saga_total and prd.saga_total >= SAGA_WARNING_THRESHOLD:
         warning_reasons.append(f"Integrações SAGA pendentes ({prd.saga_total})")
+
+    if prd.polling_processed is not None:
+        if prd.polling_processed >= POLLING_PROCESSED_CRITICAL_THRESHOLD:
+            critical_reasons.append(f"Volume crítico DTW_TR_POLLING_ENTRY ({prd.polling_processed})")
+        elif prd.polling_processed >= POLLING_PROCESSED_WARNING_THRESHOLD:
+            warning_reasons.append(f"Volume elevado DTW_TR_POLLING_ENTRY ({prd.polling_processed})")
 
     if prd.polling_total is not None:
         if prd.polling_total >= POLLING_CRITICAL_THRESHOLD:
@@ -123,7 +134,7 @@ def evaluate_hml_status(data: FlagshipReportData) -> EnvironmentStatus:
 
     max_restarts = max((r.restarts for r in hml.restarts), default=0.0)
     if max_restarts >= RESTART_CRITICAL_THRESHOLD:
-        critical_reasons.append(f"Crash loop em pod (restarts={max_restarts:.2f})")
+        warning_reasons.append(f"Crash loop em pod ({max_restarts:.2f})")
     elif max_restarts > 0:
         warning_reasons.append(f"Restarts pontuais de pods ({max_restarts:.2f})")
 

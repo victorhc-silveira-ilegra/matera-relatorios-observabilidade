@@ -39,7 +39,7 @@ class FlagshipMetricsAdapter:
         incidents = extract_scalar_from_frames(
             self._gf_hml.query_prometheus(
                 "sum by (topic) (increase(kafka_server_BrokerTopicMetrics_Count"
-                '{name="MessagesInPerSec", topic="hml.dtw.event.incident"}[5h]))',
+                '{name="MessagesInPerSec", topic="hml.dtw.event.incident"}[30m]))',
                 window,
                 instant=True,
             )
@@ -57,7 +57,7 @@ class FlagshipMetricsAdapter:
         )
         restarts = extract_pod_restarts(
             self._gf_hml.query_prometheus(
-                'increase(kube_pod_container_status_restarts_total{namespace="dtw-hml"}[6h])',
+                f'increase(kube_pod_container_status_restarts_total{{namespace="dtw-hml"}}[{window.duration_promql}])',
                 window,
                 instant=True,
             )
@@ -111,7 +111,7 @@ class FlagshipMetricsAdapter:
         )
         restarts = extract_pod_restarts(
             self._gf_prd.query_prometheus(
-                'increase(kube_pod_container_status_restarts_total{namespace="dtw-prod"}[1m])',
+                f'increase(kube_pod_container_status_restarts_total{{namespace="dtw-prod"}}[{current_window.duration_promql}])',
                 current_window,
                 instant=True,
             )
