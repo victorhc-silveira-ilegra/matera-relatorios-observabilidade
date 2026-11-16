@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.4](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.3...v1.1.4) (2026-11-16)
+
+### Correções de Bugs
+
+* **settings:** forca override de variaveis de ambiente pelo dotenv ([9a899d1](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/9a899d155a7dd246c12e987465ad965483ff2a33))
+
+### Integração Contínua (CI/CD)
+
+* **linters:** inclui escopo settings na matriz de validacao do commitlint ([c62f1f3](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/c62f1f33cc1ab300dbb34a14aa8b2040f501ecea))
+
 ## [1.1.3](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.2...v1.1.3) (2026-11-13)
 
 ### Correções de Bugs
