@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.6](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.5...v1.1.6) (2026-11-16)
+
+### Correções de Bugs
+
+* **reports:** padroniza subtitulos e titulos em negrito para flagship e revolut ([661f14c](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/661f14c192a8d32b60bbad5b7d687768009c5371))
+
 ## [1.1.5](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.4...v1.1.5) (2026-11-16)
 
 ### Correções de Bugs
