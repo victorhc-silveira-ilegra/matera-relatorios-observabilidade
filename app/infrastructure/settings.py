@@ -33,7 +33,7 @@ def _require_env(name: str, default: str | None = None) -> str:
 
 
 def load_settings(env_path: str | None = None) -> Settings:
-    load_dotenv(dotenv_path=env_path)
+    load_dotenv(dotenv_path=env_path, override=True)
     return Settings(
         kibana_hml_user=_require_env("KIBANA_HML_USER"),
         kibana_hml_pass=_require_env("KIBANA_HML_PASS"),
