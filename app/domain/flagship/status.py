@@ -28,12 +28,24 @@ class HealthLevel(StrEnum):
     CRITICAL = "CRITICAL"
 
     @property
-    def label(self) -> str:
+    def badge(self) -> str:
         if self is HealthLevel.CRITICAL:
-            return "🔴 Instável"
+            return "🔴"
         if self is HealthLevel.WARNING:
-            return "🟡 Atenção"
-        return "🟢 Estável"
+            return "🟡"
+        return "🟢"
+
+    @property
+    def text(self) -> str:
+        if self is HealthLevel.CRITICAL:
+            return "Instável"
+        if self is HealthLevel.WARNING:
+            return "Atenção"
+        return "Estável"
+
+    @property
+    def label(self) -> str:
+        return f"{self.badge} {self.text}"
 
 
 @dataclass(frozen=True)

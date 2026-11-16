@@ -43,7 +43,7 @@ def test_format_revolut_report_healthy() -> None:
     )
 
     rendered = format_revolut_report(data)
-    assert "📊 Relatório - Observabilidade | Revolut" in rendered
+    assert "📊 **Relatório - Observabilidade | Revolut**" in rendered
     assert "Ambiente estável ✅" in rendered
     assert "254.18ms ✅" in rendered
     assert "1.375s ✅" in rendered

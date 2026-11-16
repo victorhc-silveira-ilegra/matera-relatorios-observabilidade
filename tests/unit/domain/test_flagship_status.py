@@ -37,6 +37,12 @@ def test_healthy_environments_are_stable() -> None:
     hml_st = evaluate_hml_status(data)
     assert prd_st.level is HealthLevel.STABLE
     assert prd_st.label == "🟢 Estável"
+    assert prd_st.level.badge == "🟢"
+    assert prd_st.level.text == "Estável"
+    assert HealthLevel.WARNING.badge == "🟡"
+    assert HealthLevel.WARNING.text == "Atenção"
+    assert HealthLevel.CRITICAL.badge == "🔴"
+    assert HealthLevel.CRITICAL.text == "Instável"
     assert hml_st.level is HealthLevel.STABLE
 
 
