@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.5](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.4...v1.1.5) (2026-11-16)
+
+### Correções de Bugs
+
+* **flagship:** consolida limiares do grafana, amostragem por janela e formatacao para chat ([c270ffe](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/c270ffed2ee034fde4ab72d3778a80f4aac450c9))
+
 ## [1.1.4](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.3...v1.1.4) (2026-11-16)
 
 ### Correções de Bugs
