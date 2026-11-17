@@ -47,12 +47,16 @@ def test_healthy_environments_are_stable() -> None:
 
 
 def test_prd_warning_branches() -> None:
+    d0 = _healthy_report()
+    d0.prd.lag = 62.0
+    assert evaluate_prd_status(d0).level is HealthLevel.STABLE
+
     d1 = _healthy_report()
     d1.chamados_prd = "SOL-00357066"
     assert evaluate_prd_status(d1).level is HealthLevel.WARNING
 
     d2 = _healthy_report()
-    d2.prd.lag = 150.0
+    d2.prd.lag = 600.0
     assert evaluate_prd_status(d2).level is HealthLevel.WARNING
 
     d3 = _healthy_report()
@@ -120,12 +124,11 @@ def test_prd_critical_branches() -> None:
 
 def test_hml_warning_and_critical_branches() -> None:
     d0 = _healthy_report()
-    d0.hml.lag = 5.0
+    d0.hml.lag = 62.0
     assert evaluate_hml_status(d0).level is HealthLevel.STABLE
 
     d1 = _healthy_report()
-    d1.hml.lag = 50.0
-    d1.chamados_hml = "INC-1"
+    d1.hml.lag = 600.0
     assert evaluate_hml_status(d1).level is HealthLevel.WARNING
 
     d_hml_rst = _healthy_report()
@@ -140,3 +143,7 @@ def test_hml_warning_and_critical_branches() -> None:
     d2.hml.lag = 1000.0
     d2.hml.restarts = [PodRestart("pod-h", 4.0)]
     assert evaluate_hml_status(d2).level is HealthLevel.CRITICAL
+
+    d_ticket = _healthy_report()
+    d_ticket.chamados_hml = "INC-1234"
+    assert evaluate_hml_status(d_ticket).level is HealthLevel.WARNING

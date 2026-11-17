@@ -6,6 +6,7 @@ from enum import StrEnum
 from app.domain.flagship.models import FlagshipReportData
 
 LAG_IGNORE_THRESHOLD = 10.0
+LAG_WARNING_THRESHOLD = 500.0
 LAG_CRITICAL_THRESHOLD = 1000.0
 RESTART_CRITICAL_THRESHOLD = 3.0
 POLLING_WARNING_THRESHOLD = 100
@@ -88,7 +89,7 @@ def evaluate_prd_status(data: FlagshipReportData) -> EnvironmentStatus:
     if prd.lag is not None:
         if prd.lag >= LAG_CRITICAL_THRESHOLD:
             critical_reasons.append(f"Lag massivo ({prd.lag:.0f})")
-        elif prd.lag > LAG_IGNORE_THRESHOLD:
+        elif prd.lag >= LAG_WARNING_THRESHOLD:
             warning_reasons.append(f"Lag moderado ({prd.lag:.0f})")
 
     max_restarts = max((r.restarts for r in prd.restarts), default=0.0)
@@ -141,7 +142,7 @@ def evaluate_hml_status(data: FlagshipReportData) -> EnvironmentStatus:
     if hml.lag is not None:
         if hml.lag >= LAG_CRITICAL_THRESHOLD:
             critical_reasons.append(f"Lag massivo ({hml.lag:.0f})")
-        elif hml.lag > LAG_IGNORE_THRESHOLD:
+        elif hml.lag >= LAG_WARNING_THRESHOLD:
             warning_reasons.append(f"Lag moderado ({hml.lag:.0f})")
 
     max_restarts = max((r.restarts for r in hml.restarts), default=0.0)

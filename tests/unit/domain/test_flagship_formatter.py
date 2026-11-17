@@ -1,4 +1,4 @@
-from app.domain.flagship.formatter import fmt_int, fmt_num, format_flagship_report
+from app.domain.flagship.formatter import fmt_int, fmt_num, format_flagship_report, lag_badge
 from app.domain.flagship.models import (
     FlagshipReportData,
     HmlMetrics,
@@ -15,6 +15,10 @@ def test_fmt_helpers() -> None:
     assert fmt_int(None) == "No Data"
     assert fmt_num(None) == "No Data"
     assert fmt_num(14.2) == "14.2"
+    assert lag_badge(None) == ""
+    assert lag_badge(50.0) == "🟢"
+    assert lag_badge(500.0) == "🟡"
+    assert lag_badge(1000.0) == "🔴"
 
 
 def test_format_report_matches_template() -> None:
@@ -116,5 +120,5 @@ def test_format_report_variants() -> None:
     )
     rendered_err = format_flagship_report(data_err)
     assert "Erro na coleta: Falha RDS" in rendered_err
-    assert "50 🟡" in rendered_err
+    assert "50 🟢" in rendered_err
     assert "**Registros PROCESSED:** 11.000.000 🔴" in rendered_err

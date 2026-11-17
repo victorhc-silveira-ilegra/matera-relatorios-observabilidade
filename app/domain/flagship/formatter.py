@@ -4,6 +4,7 @@ from app.domain.flagship.models import FlagshipReportData, PodRestart
 from app.domain.flagship.status import (
     LAG_CRITICAL_THRESHOLD,
     LAG_IGNORE_THRESHOLD,
+    LAG_WARNING_THRESHOLD,
     POLLING_CRITICAL_THRESHOLD,
     POLLING_WARNING_THRESHOLD,
     RDS_SUSTAINED_POINTS,
@@ -41,6 +42,16 @@ def polling_processed_badge(val: int | None) -> str:
     return "🔴"
 
 
+def lag_badge(val: float | None) -> str:
+    if val is None:
+        return ""
+    if val >= LAG_CRITICAL_THRESHOLD:
+        return "🔴"
+    if val >= LAG_WARNING_THRESHOLD:
+        return "🟡"
+    return "🟢"
+
+
 def fmt_restarts_block(title: str, restarts: list[PodRestart]) -> list[str]:
     if not restarts:
         return [f"**{title}:** Sem ocorrências"]
@@ -73,8 +84,7 @@ def format_flagship_report(data: FlagshipReportData) -> str:
         f"**Incidentes (últimos 30 min):** {hml_inc_txt}{inc_badge(data.hml.incidents)}",
     ]
     if data.hml.lag is not None and data.hml.lag > LAG_IGNORE_THRESHOLD:
-        hml_lag_emoji = "🔴" if data.hml.lag >= LAG_CRITICAL_THRESHOLD else "🟡"
-        hml_lines.extend(["", f"**Lag:** {fmt_num(data.hml.lag)} {hml_lag_emoji}"])
+        hml_lines.extend(["", f"**Lag:** {fmt_num(data.hml.lag)} {lag_badge(data.hml.lag)}"])
     hml_lines.extend(["", *fmt_restarts_block("Restarts", data.hml.restarts)])
     sections.append("\n".join(hml_lines))
 
@@ -103,8 +113,7 @@ def format_flagship_report(data: FlagshipReportData) -> str:
         f"**Incidentes (últimos 30 min):** {prd_inc_txt}{inc_badge(data.prd.incidents)}",
     ]
     if data.prd.lag is not None and data.prd.lag > LAG_IGNORE_THRESHOLD:
-        prd_lag_emoji = "🔴" if data.prd.lag >= LAG_CRITICAL_THRESHOLD else "🟡"
-        prd_lines.extend(["", f"**Lag:** {fmt_num(data.prd.lag)} {prd_lag_emoji}"])
+        prd_lines.extend(["", f"**Lag:** {fmt_num(data.prd.lag)} {lag_badge(data.prd.lag)}"])
     prd_lines.extend(["", *fmt_restarts_block("Restarts", data.prd.restarts)])
     sections.append("\n".join(prd_lines))
 

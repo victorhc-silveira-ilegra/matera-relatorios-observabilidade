@@ -23,7 +23,7 @@ Janelas cumulativas de erros (`routing_errors`) e chamadas de API (`api_hits`) e
   `sum by (topic) (increase(kafka_server_BrokerTopicMetrics_Count{name="MessagesInPerSec", topic="hml.dtw.event.incident"}[30m]))`
   - `< 50`: `🟢`
   - `>= 50`: `🟡`
-- **Lag Kafka (`Grafana HML`)**: Soma de lag de consumidores excluindo grupos canary/backup. Valores `<= 10.0` sao omitidos da impressao na tela. Valores `> 10.0` sao impressos com badge (`🟡` ou `🔴`).
+- **Lag Kafka (`Grafana HML`)**: Soma de lag de consumidores excluindo grupos canary/backup. Valores `<= 10.0` sao omitidos da impressao na tela. Valores entre `10` e `500` sao impressos com badge verde `🟢`. Valores `>= 500` exibem `🟡` e `>= 1000` exibem `🔴`.
 - **Restarts de Pods (`Grafana HML`)**: Coleta no intervalo dinâmico da janela (`duration_promql`, ex.: `[120m]` para 08:30–10:30 e `[180m]` para 10:30–13:30 e 13:30–16:30):
   `increase(kube_pod_container_status_restarts_total{namespace="dtw-hml"}[<duration_promql>])`
 
@@ -36,7 +36,7 @@ Janelas cumulativas de erros (`routing_errors`) e chamadas de API (`api_hits`) e
   `sum by (topic) (increase(kafka_server_BrokerTopicMetrics_Count{name="MessagesInPerSec", topic="prod.dtw.event.incident"}[30m]))`
   - `< 50`: `🟢`
   - `>= 50`: `🟡`
-- **Lag Kafka (`Grafana PRD`)**: Valores `<= 10.0` sao omitidos da impressao na tela. Valores `> 10.0` sao impressos com badge (`🟡` ou `🔴`).
+- **Lag Kafka (`Grafana PRD`)**: Valores `<= 10.0` sao omitidos da impressao na tela. Valores entre `10` e `500` exibem `🟢`. Valores entre `500` e `1000` exibem `🟡`, e `>= 1000` exibem `🔴`.
 - **Restarts de Pods (`Grafana PRD`)**: Coleta no intervalo dinâmico da janela (`duration_promql`, ex.: `[120m]` para 08:30–10:30 e `[180m]` para 10:30–13:30 e 13:30–16:30):
   `increase(kube_pod_container_status_restarts_total{namespace="dtw-prod"}[<duration_promql>])`.
 - **Integracao SAGA (`Grafana PRD`, MySQL `4hs8MXdIz`)**:
@@ -61,15 +61,15 @@ Janelas cumulativas de erros (`routing_errors`) e chamadas de API (`api_hits`) e
 - **🟡 Atencao**:
   - `5% <= ERROR < 20%` ou `WARN >= 20%`.
   - Erros recorrentes em producer (`routing_errors >= 10`) ou API hits (`api_hits >= 10`).
-  - Lag moderado (`10 < lag < 1000`).
+  - Lag moderado (`500 <= lag < 1000`).
   - Restarts pontuais (`0 < restarts < 3.0`).
   - SAGA acumulado em processamento (`10 <= total < 100` e `acima_5m == 0`).
   - Tabela Polling com volume elevado (`8.500.000 <= PROCESSED < 10.500.000` ou `100 <= total pendente < 10.000`).
   - RDS CPU com pico pontual (`1 <= pontos < 3`).
   - Chamado ativo informado em `--chamados-prd`.
-- **🟢 Estavel**: Quando nenhum dos criterios acima e atingido (ex.: `SAGA total < 10`, `Polling < 100`, sem picos de CPU, sem lag).
+- **🟢 Estavel**: Quando nenhum dos criterios acima e atingido (ex.: `lag < 500`, `SAGA total < 10`, `Polling < 100`, sem picos de CPU).
 
 ### Homologacao (HML)
 - **🔴 Instavel**: Exclusivamente por Lag massivo no Kafka (`lag >= 1000`). Erros de log e restarts de pods nao caracterizam instabilidade em homologacao.
-- **🟡 Atencao**: Lag moderado (`10 < lag < 1000`), restarts de pods (`restarts > 0`) ou chamados ativos em HML.
+- **🟡 Atencao**: Lag moderado (`500 <= lag < 1000`), restarts de pods (`restarts > 0`) ou chamados ativos em HML.
 - **🟢 Estavel**: Operacao normal.
