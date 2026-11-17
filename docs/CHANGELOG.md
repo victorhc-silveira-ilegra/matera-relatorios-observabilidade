@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.7](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.6...v1.1.7) (2026-11-17)
+
+### Correções de Bugs
+
+* **flagship:** calibra limiar de alerta de lag para 500 e ajusta badges ([293bd85](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/293bd85de24021516a5e76cd0740e8953cf552e0))
+
 ## [1.1.6](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.5...v1.1.6) (2026-11-16)
 
 ### Correções de Bugs
