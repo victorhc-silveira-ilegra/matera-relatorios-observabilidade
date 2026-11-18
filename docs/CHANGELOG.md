@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.2.0...v1.2.1) (2026-11-18)
+
+### Correções de Bugs
+
+* **flagship:** restaura formatacao de asterisco duplo para preservar emojis no Google Chat ([bf8c2d3](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/bf8c2d3484a2c50084715a6e172d89c2a3bee189))
+
 ## [1.2.0](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.7...v1.2.0) (2026-11-18)
 
 ### Novas Funcionalidades
