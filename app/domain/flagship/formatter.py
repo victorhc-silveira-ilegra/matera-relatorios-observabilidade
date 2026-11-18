@@ -54,8 +54,8 @@ def lag_badge(val: float | None) -> str:
 
 def fmt_restarts_block(title: str, restarts: list[PodRestart]) -> list[str]:
     if not restarts:
-        return [f"**{title}:** Sem ocorrências"]
-    lines = [f"**{title}:**"]
+        return [f"*{title}:* Sem ocorrências"]
+    lines = [f"*{title}:*"]
     for r in restarts:
         lines.append(f"- {r.pod} (Restarts = {int(round(r.restarts))})")
     return lines
@@ -65,26 +65,26 @@ def format_flagship_report(data: FlagshipReportData) -> str:
     sep = "\n\n━━━━━━━━━━━━━━━━━━\n\n"
     sections: list[str] = []
 
-    sections.append(f"📊 **RELATÓRIO DTW — {data.date_label} às {data.hour_label}**")
-    sections.append("🏥 **SAÚDE DO DTW**")
+    sections.append(f"📊 *RELATÓRIO DTW — {data.date_label} às {data.hour_label}*")
+    sections.append("🏥 *SAÚDE DO DTW*")
 
     hml_logs = data.hml.logs
     hml_inc_txt = fmt_num(data.hml.incidents)
     hml_lines = [
-        "🔧 **AMBIENTE DE HOMOLOGAÇÃO (HML)**",
+        "🔧 *AMBIENTE DE HOMOLOGAÇÃO (HML)*",
         "",
-        "📄 **Logs**",
-        f"🟢 **INFO:** {hml_logs.pct('INFO'):.2f}%  ",
-        f"🟡 **WARN:** {hml_logs.pct('WARN'):.2f}%  ",
-        f"🔴 **ERROR:** {hml_logs.pct('ERROR'):.2f}%  ",
-        f"🔵 **DEBUG:** {hml_logs.pct('DEBUG'):.2f}%",
+        "📄 *Logs*",
+        f"🟢 *INFO:* {hml_logs.pct('INFO'):.2f}%  ",
+        f"🟡 *WARN:* {hml_logs.pct('WARN'):.2f}%  ",
+        f"🔴 *ERROR:* {hml_logs.pct('ERROR'):.2f}%  ",
+        f"🔵 *DEBUG:* {hml_logs.pct('DEBUG'):.2f}%",
         "",
-        "📊 **Outras Métricas**",
+        "📊 *Outras Métricas*",
         "",
-        f"**Incidentes (últimos 30 min):** {hml_inc_txt}{inc_badge(data.hml.incidents)}",
+        f"*Incidentes (últimos 30 min):* {hml_inc_txt}{inc_badge(data.hml.incidents)}",
     ]
     if data.hml.lag is not None and data.hml.lag > LAG_IGNORE_THRESHOLD:
-        hml_lines.extend(["", f"**Lag:** {fmt_num(data.hml.lag)} {lag_badge(data.hml.lag)}"])
+        hml_lines.extend(["", f"*Lag:* {fmt_num(data.hml.lag)} {lag_badge(data.hml.lag)}"])
     hml_lines.extend(["", *fmt_restarts_block("Restarts", data.hml.restarts)])
     sections.append("\n".join(hml_lines))
 
@@ -92,28 +92,28 @@ def format_flagship_report(data: FlagshipReportData) -> str:
     prd_err_count = fmt_int(prd_logs.count("ERROR"))
     prd_inc_txt = fmt_num(data.prd.incidents)
 
-    routing_lines = [f"**{wc.window_label} →** {fmt_int(wc.count)}  " for wc in data.prd.routing_errors_by_window]
+    routing_lines = [f"*{wc.window_label} →* {fmt_int(wc.count)}  " for wc in data.prd.routing_errors_by_window]
     if routing_lines:
         routing_lines[-1] = routing_lines[-1].rstrip()
 
     prd_lines = [
-        "🚀 **AMBIENTE DE PRODUÇÃO (PRD)**",
+        "🚀 *AMBIENTE DE PRODUÇÃO (PRD)*",
         "",
-        "📄 **Logs**",
-        f"🟢 **INFO:** {prd_logs.pct('INFO'):.2f}%  ",
-        f"🟡 **WARN:** {prd_logs.pct('WARN'):.2f}%  ",
-        f"🔴 **ERROR:** {prd_logs.pct('ERROR'):.2f}% *({prd_err_count})*",
+        "📄 *Logs*",
+        f"🟢 *INFO:* {prd_logs.pct('INFO'):.2f}%  ",
+        f"🟡 *WARN:* {prd_logs.pct('WARN'):.2f}%  ",
+        f"🔴 *ERROR:* {prd_logs.pct('ERROR'):.2f}% _({prd_err_count})_",
         "",
-        "🛑 **LOGS DE ERRO**",
-        "**Serviço: cc-integration-event-routing-entry-producer**  ",
+        "🛑 *LOGS DE ERRO*",
+        "*Serviço: cc-integration-event-routing-entry-producer*  ",
         *routing_lines,
         "",
-        "📊 **Outras Métricas**",
+        "📊 *Outras Métricas*",
         "",
-        f"**Incidentes (últimos 30 min):** {prd_inc_txt}{inc_badge(data.prd.incidents)}",
+        f"*Incidentes (últimos 30 min):* {prd_inc_txt}{inc_badge(data.prd.incidents)}",
     ]
     if data.prd.lag is not None and data.prd.lag > LAG_IGNORE_THRESHOLD:
-        prd_lines.extend(["", f"**Lag:** {fmt_num(data.prd.lag)} {lag_badge(data.prd.lag)}"])
+        prd_lines.extend(["", f"*Lag:* {fmt_num(data.prd.lag)} {lag_badge(data.prd.lag)}"])
     prd_lines.extend(["", *fmt_restarts_block("Restarts", data.prd.restarts)])
     sections.append("\n".join(prd_lines))
 
@@ -122,13 +122,13 @@ def format_flagship_report(data: FlagshipReportData) -> str:
     saga_total_emoji = "🟢" if (saga_total or 0) < SAGA_WARNING_THRESHOLD else "🟡"
     saga_5m_emoji = "🟢" if (saga_5m or 0) == 0 else "🔴"
     saga_lines = [
-        "🔄 **INTEGRAÇÃO SAGA**",
-        f"**Total de integrações:** {fmt_int(saga_total)} {saga_total_emoji}  ",
-        f"**Integrações acima de 5 min:** {fmt_int(saga_5m)} {saga_5m_emoji}",
+        "🔄 *INTEGRAÇÃO SAGA*",
+        f"*Total de integrações:* {fmt_int(saga_total)} {saga_total_emoji}  ",
+        f"*Integrações acima de 5 min:* {fmt_int(saga_5m)} {saga_5m_emoji}",
     ]
     sections.append("\n".join(saga_lines))
 
-    api_lines = [f"**{wc.window_label} →** {fmt_int(wc.count)} hits  " for wc in data.prd.api_hits_by_window]
+    api_lines = [f"*{wc.window_label} →* {fmt_int(wc.count)} hits  " for wc in data.prd.api_hits_by_window]
     if api_lines:
         api_lines[-1] = api_lines[-1].rstrip()
 
@@ -142,21 +142,21 @@ def format_flagship_report(data: FlagshipReportData) -> str:
 
     polling_badge = polling_processed_badge(data.prd.polling_processed)
     dados_lines = [
-        "🗃️ **MONITORAMENTO DE DADOS**",
+        "🗃️ *MONITORAMENTO DE DADOS*",
         "",
-        "📥 **Tabela DTW_TR_POLLING_ENTRY**",
-        f"**Registros PROCESSED:** {fmt_int(data.prd.polling_processed)} {polling_badge}  ",
-        f"**Total de registros:** {fmt_int(data.prd.polling_total)} {polling_emoji}",
+        "📥 *Tabela DTW_TR_POLLING_ENTRY*",
+        f"*Registros PROCESSED:* {fmt_int(data.prd.polling_processed)} {polling_badge}  ",
+        f"*Total de registros:* {fmt_int(data.prd.polling_total)} {polling_emoji}",
         "",
-        "📈 **API Hits — dtw-transaction-api**",
+        "📈 *API Hits — dtw-transaction-api*",
         *api_lines,
     ]
     sections.append("\n".join(dados_lines))
 
     rds_lines = [
-        "🧠 **RDS — CPU UTILIZATION**",
+        "🧠 *RDS — CPU UTILIZATION*",
         "",
-        f"⏱️ **{data.window_label} (picos ≥ 90%)**  ",
+        f"⏱️ *{data.window_label} (picos ≥ 90%)*  ",
     ]
     if data.rds.error:
         rds_lines.append(f"Erro na coleta: {data.rds.error}")
@@ -168,25 +168,25 @@ def format_flagship_report(data: FlagshipReportData) -> str:
                 or (inst.current_pct is not None and inst.current_pct >= 90.0)
                 else "🟡"
             )
-            rds_lines.append(f"**{inst.name}:** {inst.peak_pct:.3f}% {peak_emoji}  ")
+            rds_lines.append(f"*{inst.name}:* {inst.peak_pct:.3f}% {peak_emoji}  ")
         rds_lines[-1] = rds_lines[-1].rstrip()
     else:
-        rds_lines.append("**Sem ocorrências**")
+        rds_lines.append("*Sem ocorrências*")
 
-    rds_lines.extend(["", "📉 **CONSUMO ATUAL**"])
+    rds_lines.extend(["", "📉 *CONSUMO ATUAL*"])
     if data.rds.instances:
         for inst in data.rds.instances:
             val_txt = f"{inst.current_pct:.3f}%" if inst.current_pct is not None else "No Data"
-            rds_lines.append(f"**{inst.name}:** {val_txt}  ")
+            rds_lines.append(f"*{inst.name}:* {val_txt}  ")
         rds_lines[-1] = rds_lines[-1].rstrip()
     else:
         rds_lines.append("Sem dados disponíveis")
     sections.append("\n".join(rds_lines))
 
     chamados_lines = [
-        "🧾 **CHAMADOS EM ANDAMENTO**",
-        f"🔹 **HML:** {data.chamados_hml}  ",
-        f"🔹 **PRD:** {data.chamados_prd}",
+        "🧾 *CHAMADOS EM ANDAMENTO*",
+        f"🔹 *HML:* {data.chamados_hml}  ",
+        f"🔹 *PRD:* {data.chamados_prd}",
     ]
     sections.append("\n".join(chamados_lines))
 
@@ -194,9 +194,9 @@ def format_flagship_report(data: FlagshipReportData) -> str:
     hml_status = evaluate_hml_status(data)
 
     status_lines = [
-        "📌 **STATUS DOS AMBIENTES**",
-        f"{prd_status.level.badge} **Produção (PRD):** {prd_status.level.text}  ",
-        f"{hml_status.level.badge} **Homologação (HML):** {hml_status.level.text}",
+        "📌 *STATUS DOS AMBIENTES*",
+        f"{prd_status.level.badge} *Produção (PRD):* {prd_status.level.text}  ",
+        f"{hml_status.level.badge} *Homologação (HML):* {hml_status.level.text}",
     ]
     sections.append("\n".join(status_lines))
 

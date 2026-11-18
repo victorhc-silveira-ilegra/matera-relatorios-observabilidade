@@ -16,9 +16,11 @@ from app.domain.time_window import TimeWindow, build_time_window, windows_up_to
 class FakeOutput:
     def __init__(self) -> None:
         self.content = ""
+        self.html_content: str | None = None
 
-    def write(self, content: str) -> None:
+    def write(self, content: str, html_content: str | None = None) -> None:
         self.content = content
+        self.html_content = html_content
 
 
 class FakeFlagshipReader:

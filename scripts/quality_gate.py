@@ -90,7 +90,7 @@ def run_stage(stage: str) -> None:
         run_step("1/5 Lint - Mypy", [py, "-m", "mypy", "app", "tests"])
         run_step("1/5 Lint - Vulture", [py, "-m", "vulture", "--min-confidence", "80", "app"])
     if stage in {"security", "all"}:
-        run_step("2/5 Security - Bandit", [py, "-m", "bandit", "-q", "-r", "app"])
+        run_step("2/5 Security - Bandit", [py, "-m", "bandit", "-q", "-c", "pyproject.toml", "-r", "app"])
         run_step("2/5 Security - Pip-Audit", [py, "-m", "pip_audit", "-r", "requirements.txt"])
     if stage in {"test", "all"}:
         run_step("3/5 Test - Pytest", [py, "-m", "pytest"])

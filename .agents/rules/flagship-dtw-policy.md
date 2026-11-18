@@ -73,3 +73,10 @@ Janelas cumulativas de erros (`routing_errors`) e chamadas de API (`api_hits`) e
 - **🔴 Instavel**: Exclusivamente por Lag massivo no Kafka (`lag >= 1000`). Erros de log e restarts de pods nao caracterizam instabilidade em homologacao.
 - **🟡 Atencao**: Lag moderado (`500 <= lag < 1000`), restarts de pods (`restarts > 0`) ou chamados ativos em HML.
 - **🟢 Estavel**: Operacao normal.
+
+---
+
+## 4. Formatacao Visual para Google Chat
+- O relatorio Flagship e consumido diretamente no **Google Chat**.
+- Negrito deve ser estritamente formatado com asterisco simples (`*texto*`), pois o Google Chat nao reconhece sintaxe de markdown duplo (`**texto**`).
+- Destaques secundarios e contagens complementares utilizam italico do Google Chat com sublinhado (`_texto_`).
