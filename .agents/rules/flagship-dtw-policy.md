@@ -76,7 +76,8 @@ Janelas cumulativas de erros (`routing_errors`) e chamadas de API (`api_hits`) e
 
 ---
 
-## 4. Formatacao Visual para Google Chat
-- O relatorio Flagship e consumido diretamente no **Google Chat**.
-- Negrito deve ser estritamente formatado com asterisco simples (`*texto*`), pois o Google Chat nao reconhece sintaxe de markdown duplo (`**texto**`).
-- Destaques secundarios e contagens complementares utilizam italico do Google Chat com sublinhado (`_texto_`).
+## 4. Formatacao Visual e Integridade de Emojis
+- O relatorio Flagship e consumido no **Google Chat**.
+- Negrito utiliza markdown padrao com asteriscos duplos (`**texto**`).
+- O uso de asterisco duplo protege a integridade dos emojis Unicode (evitando corrupcao de caracteres multibyte no composer web do Google Chat).
+- Destaques secundarios e contagens utilizam parenteses com asterisco simples `*(texto)*`.

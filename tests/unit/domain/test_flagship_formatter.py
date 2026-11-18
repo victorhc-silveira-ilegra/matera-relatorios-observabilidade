@@ -62,18 +62,18 @@ def test_format_report_matches_template() -> None:
     )
 
     rendered = format_flagship_report(data)
-    assert "📊 *RELATÓRIO DTW — 11/11 às 16:30h*" in rendered
-    assert "🏥 *SAÚDE DO DTW*" in rendered
-    assert "🔴 *ERROR:* 0.05% _(4.561)_" in rendered
-    assert "*Registros PROCESSED:* 1.217.407 🟢" in rendered
-    assert "*Incidentes (últimos 30 min):* No Data" in rendered
-    assert "*Restarts:*" in rendered
+    assert "📊 **RELATÓRIO DTW — 11/11 às 16:30h**" in rendered
+    assert "🏥 **SAÚDE DO DTW**" in rendered
+    assert "🔴 **ERROR:** 0.05% *(4.561)*" in rendered
+    assert "**Registros PROCESSED:** 1.217.407 🟢" in rendered
+    assert "**Incidentes (últimos 30 min):** No Data" in rendered
+    assert "**Restarts:**" in rendered
     assert "- cc-integ-acc-ev-consumer-instvld (Restarts = 3)" in rendered
-    assert "*Incidentes (últimos 30 min):* 14.2 🟢" in rendered
-    assert "*Lag:*" not in rendered
-    assert "*conciliation-1:* No Data" in rendered
-    assert "🟢 *Produção (PRD):* Estável" in rendered
-    assert "🟡 *Homologação (HML):* Atenção" in rendered
+    assert "**Incidentes (últimos 30 min):** 14.2 🟢" in rendered
+    assert "**Lag:**" not in rendered
+    assert "**conciliation-1:** No Data" in rendered
+    assert "🟢 **Produção (PRD):** Estável" in rendered
+    assert "🟡 **Homologação (HML):** Atenção" in rendered
 
 
 def test_format_report_variants() -> None:
@@ -101,13 +101,13 @@ def test_format_report_variants() -> None:
     rendered = format_flagship_report(data)
     assert "1.200 🔴" in rendered
     assert "1.500 🔴" in rendered
-    assert "*Registros PROCESSED:* 9.000.000 🟡" in rendered
-    assert "*Incidentes (últimos 30 min):* 60 🟡" in rendered
-    assert "*Incidentes (últimos 30 min):* 80 🟡" in rendered
-    assert "*db-1:* 92.000% 🟡" in rendered
-    assert "*db-2:* 96.000% 🔴" in rendered
-    assert "*Total de integrações:* 15 🟡" in rendered
-    assert "*Integrações acima de 5 min:* 1 🔴" in rendered
+    assert "**Registros PROCESSED:** 9.000.000 🟡" in rendered
+    assert "**Incidentes (últimos 30 min):** 60 🟡" in rendered
+    assert "**Incidentes (últimos 30 min):** 80 🟡" in rendered
+    assert "**db-1:** 92.000% 🟡" in rendered
+    assert "**db-2:** 96.000% 🔴" in rendered
+    assert "**Total de integrações:** 15 🟡" in rendered
+    assert "**Integrações acima de 5 min:** 1 🔴" in rendered
     assert "Sem dados disponíveis" in rendered
 
     data_err = FlagshipReportData(
@@ -121,4 +121,4 @@ def test_format_report_variants() -> None:
     rendered_err = format_flagship_report(data_err)
     assert "Erro na coleta: Falha RDS" in rendered_err
     assert "50 🟢" in rendered_err
-    assert "*Registros PROCESSED:* 11.000.000 🔴" in rendered_err
+    assert "**Registros PROCESSED:** 11.000.000 🔴" in rendered_err
