@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.7...v1.2.0) (2026-11-18)
+
+### Novas Funcionalidades
+
+* **reports:** ajusta negrito para Google Chat e adiciona Rich Text HTML para Google Docs ([9e7c305](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/9e7c3059f4cf8905cd32bf2c13f01571c9382c37))
+
 ## [1.1.7](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.1.6...v1.1.7) (2026-11-17)
 
 ### Correções de Bugs
