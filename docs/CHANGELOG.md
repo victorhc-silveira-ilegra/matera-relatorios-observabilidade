@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.2](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.2.1...v1.2.2) (2026-11-18)
+
+### Correções de Bugs
+
+* **revolut:** reverte formatacao html e clipboard mantendo markdown padrao ([738f1ae](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/738f1aef009b31177125ddd7f80d2ce65e62537f))
+
 ## [1.2.1](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.2.0...v1.2.1) (2026-11-18)
 
 ### Correções de Bugs
