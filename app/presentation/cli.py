@@ -48,7 +48,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--responsavel", default="Victor Silveira")
     parser.add_argument("--output", "-o", default=None)
     parser.add_argument("--skip-rds", action="store_true")
-    parser.add_argument("--no-clip", action="store_true", default=False)
     return parser.parse_args(argv)
 
 
@@ -71,10 +70,7 @@ def main(argv: list[str] | None = None) -> int:
         window=current_window.key,
     )
 
-    output_port = ConsoleAndFileOutputAdapter(
-        Path(args.output) if args.output else None,
-        copy_clipboard=not args.no_clip,
-    )
+    output_port = ConsoleAndFileOutputAdapter(Path(args.output) if args.output else None)
 
     if args.client == "revolut":
         revolut_reader = RevolutMetricsAdapter(settings)

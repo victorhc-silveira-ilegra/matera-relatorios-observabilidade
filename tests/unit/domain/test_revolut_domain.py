@@ -1,5 +1,4 @@
 from app.domain.revolut.formatter import fmt_duration, format_revolut_report, latency_badge
-from app.domain.revolut.html_formatter import format_revolut_html
 from app.domain.revolut.models import (
     RevolutLatency,
     RevolutReportData,
@@ -49,13 +48,6 @@ def test_format_revolut_report_healthy() -> None:
     assert "254.18ms ✅" in rendered
     assert "1.375s ✅" in rendered
 
-    html = format_revolut_html(data)
-    assert "<h2>📊 Relatório - Observabilidade | Revolut</h2>" in html
-    assert "Ambiente estável ✅" in html
-    assert "254.18ms ✅" in html
-    assert "1.375s ✅" in html
-    assert "Sem erros" in html
-
 
 def test_format_revolut_report_warning_and_critical() -> None:
     warn_data = RevolutReportData(
@@ -74,9 +66,6 @@ def test_format_revolut_report_warning_and_critical() -> None:
     rendered_warn = format_revolut_report(warn_data)
     assert "Ambiente em atenção 🟡" in rendered_warn
     assert "spi-addressing-queues" in rendered_warn
-    html_warn = format_revolut_html(warn_data)
-    assert "Ambiente em atenção 🟡" in html_warn
-    assert "spi-addressing-queues" in html_warn
 
     service_warn_data = RevolutReportData(
         date_full="13/11/2026",
@@ -93,9 +82,6 @@ def test_format_revolut_report_warning_and_critical() -> None:
     assert "Ambiente em atenção 🟡" in rendered_service_warn
     assert "Identificados 1 serviço(s) com erros nos logs em acompanhamento contínuo." in rendered_service_warn
     assert "13:30h - 16:30h  🟡         0                   Não" in rendered_service_warn
-    html_service_warn = format_revolut_html(service_warn_data)
-    assert "Ambiente em atenção 🟡" in html_service_warn
-    assert "spi-dispute - 223.7 🔴" in html_service_warn
 
     crit_data = RevolutReportData(
         date_full="12/11/2026",
@@ -112,7 +98,4 @@ def test_format_revolut_report_warning_and_critical() -> None:
     rendered_crit = format_revolut_report(crit_data)
     assert "Ambiente instável 🔴" in rendered_crit
     assert "spi-main - 250.0 🔴" in rendered_crit
-    html_crit = format_revolut_html(crit_data)
-    assert "Ambiente instável 🔴" in html_crit
-    assert "spi-main - 250.0 🔴" in html_crit
     assert "spi-dispute - 120.0 🔴" in rendered_crit

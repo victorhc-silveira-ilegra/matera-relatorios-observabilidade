@@ -11,7 +11,6 @@ from app.application.ports import (
 from app.domain.flagship.formatter import format_flagship_report
 from app.domain.flagship.models import FlagshipReportData, RdsMetrics
 from app.domain.revolut.formatter import format_revolut_report
-from app.domain.revolut.html_formatter import format_revolut_html
 from app.domain.time_window import TimeWindow
 
 
@@ -83,6 +82,5 @@ class GenerateRevolutReportUseCase:
             chamados=command.chamados,
         )
         rendered = format_revolut_report(report_data)
-        rendered_html = format_revolut_html(report_data)
-        self._output_port.write(rendered, html_content=rendered_html)
+        self._output_port.write(rendered)
         return rendered

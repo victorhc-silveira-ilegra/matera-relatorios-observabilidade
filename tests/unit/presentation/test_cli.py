@@ -83,7 +83,7 @@ def test_cli_entrypoint(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cli_mod, "RevolutMetricsAdapter", lambda s: FakeRevolutReader())
 
     assert cli_mod.main(["--client", "flagship", "--date", "2026-11-12", "--window", "08:30-10:30"]) == 0
-    assert cli_mod.main(["--client", "revolut", "--window", "08:30-10:30", "--no-clip"]) == 0
+    assert cli_mod.main(["--client", "revolut", "--window", "08:30-10:30"]) == 0
 
     monkeypatch.setattr(sys, "argv", ["cli", "--client", "revolut", "--window", "08:30-10:30"])
     with pytest.raises(SystemExit) as exc_info:
