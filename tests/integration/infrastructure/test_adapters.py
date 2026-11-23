@@ -190,8 +190,12 @@ def test_flagship_and_revolut_adapters(monkeypatch: pytest.MonkeyPatch) -> None:
     assert len(rv_clean.read_revolut(w1, [w1], "V", "Sem ocorrências.").services_with_errors) == 0
 
     monkeypatch.setattr(rv_mod, "GrafanaClient", FakeGF)
-    assert "16:30h" in rv.read_revolut(w2, [w1, w2], "V", "Sem ocorrências.").next_analysis_label
-    assert "proximo" in rv.read_revolut(w3, [w1, w2, w3], "V", "Sem ocorrências.").next_analysis_label.replace("ó", "o")
+    rep2 = rv.read_revolut(w2, [w1, w2], "V", "Sem ocorrências.")
+    assert "16:30h" in rep2.next_analysis_label
+    assert [ws.period_label for ws in rep2.window_statuses] == ["08:30h - 10:30h", "10:30h - 13:30h"]
+    rep3 = rv.read_revolut(w3, [w1, w2, w3], "V", "Sem ocorrências.")
+    assert "proximo" in rep3.next_analysis_label.replace("ó", "o")
+    assert len(rep3.window_statuses) == 3
 
     bad_settings = Settings(**{**settings.__dict__, "grafana_revolut_user": ""})
     with pytest.raises(ValueError):

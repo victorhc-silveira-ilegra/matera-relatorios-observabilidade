@@ -17,6 +17,14 @@ class RevolutServiceError:
     value: float
 
 
+@dataclass(frozen=True)
+class RevolutWindowStatus:
+    period_label: str
+    badge: str
+    critical_events: int
+    critical_event_details: tuple[str, ...] = ()
+
+
 @dataclass
 class RevolutReportData:
     date_full: str
@@ -29,5 +37,6 @@ class RevolutReportData:
     pagador_pix_by_window: list[WindowCount] = field(default_factory=list)
     services_with_errors: list[RevolutServiceError] = field(default_factory=list)
     services_without_errors: list[RevolutServiceError] = field(default_factory=list)
+    window_statuses: list[RevolutWindowStatus] = field(default_factory=list)
     chamados: str = "Sem ocorrências."
     next_analysis_label: str = ""

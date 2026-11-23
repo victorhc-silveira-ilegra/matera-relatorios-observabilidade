@@ -11,6 +11,7 @@ from app.domain.revolut.models import (
     RevolutLatency,
     RevolutReportData,
     RevolutServiceError,
+    RevolutWindowStatus,
 )
 from app.domain.time_window import WindowCount
 
@@ -99,7 +100,7 @@ def test_format_revolut_report_warning_and_critical() -> None:
     rendered_service_warn = format_revolut_report(service_warn_data)
     assert "Ambiente em atenção 🟡" in rendered_service_warn
     assert "Identificados 1 serviço(s) com erros nos logs em acompanhamento contínuo." in rendered_service_warn
-    assert "13:30h - 16:30h  🟡         0                   Não" in rendered_service_warn
+    assert "13:30h - 16:30h  🟡         1 (spi-dispute)     Não" in rendered_service_warn
 
     crit_data = RevolutReportData(
         date_full="12/11/2026",
@@ -121,23 +122,31 @@ def test_format_revolut_report_warning_and_critical() -> None:
 
     recebedor_crit_data = RevolutReportData(
         date_full="23/11/2026",
-        period_label="10:30h - 13:30h",
-        current_window_label="10:30–13:30",
+        period_label="13:30h - 16:30h",
+        current_window_label="13:30–16:30",
         pagador_latency=RevolutLatency(p50_seconds=0.3, p95_seconds=0.7),
         recebedor_latency=RevolutLatency(p50_seconds=1.4, p95_seconds=2.468),
         recebedor_pix_by_window=[
             WindowCount("08:30 à 10:30", 7000),
             WindowCount("10:30 à 13:30", 14000),
+            WindowCount("13:30 à 16:30", 15000),
         ],
         services_without_errors=[RevolutServiceError("spi-main", 0.0)],
-        next_analysis_label="23/11/2026 às 16:30h",
+        window_statuses=[
+            RevolutWindowStatus("08:30h - 10:30h", "🔴", 1, ("Recebedor P50",)),
+            RevolutWindowStatus("10:30h - 13:30h", "🔴", 1, ("Recebedor P50",)),
+            RevolutWindowStatus("13:30h - 16:30h", "🔴", 2, ("Recebedor P50", "Recebedor P95")),
+        ],
+        next_analysis_label="próximo dia útil às 10:30h",
     )
     rendered_rec_crit = format_revolut_report(recebedor_crit_data)
     assert "Ambiente instável 🔴" in rendered_rec_crit
     assert "Latência crítica identificada no período (sem erros nos logs)." in rendered_rec_crit
     assert "1.400s 🔴" in rendered_rec_crit
     assert "2.468s 🔴" in rendered_rec_crit
-    assert "10:30h - 13:30h  🔴         0                   Não" in rendered_rec_crit
+    assert "08:30h - 10:30h  🔴         1 (Recebedor P50)                 Não" in rendered_rec_crit
+    assert "10:30h - 13:30h  🔴         1 (Recebedor P50)                 Não" in rendered_rec_crit
+    assert "13:30h - 16:30h  🔴         2 (Recebedor P50, Recebedor P95)  Não" in rendered_rec_crit
 
     recebedor_warn_data = RevolutReportData(
         date_full="23/11/2026",
