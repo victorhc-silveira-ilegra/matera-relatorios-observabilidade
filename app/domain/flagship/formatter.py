@@ -2,10 +2,14 @@ from __future__ import annotations
 
 from app.domain.flagship.models import FlagshipReportData, PodRestart
 from app.domain.flagship.status import (
+    INCIDENT_WARNING_THRESHOLD,
     LAG_CRITICAL_THRESHOLD,
     LAG_IGNORE_THRESHOLD,
     LAG_WARNING_THRESHOLD,
     POLLING_CRITICAL_THRESHOLD,
+    POLLING_PROCESSED_CRITICAL_THRESHOLD,
+    POLLING_PROCESSED_WARNING_THRESHOLD,
+    RDS_CPU_CRITICAL_PCT,
     RDS_SUSTAINED_POINTS,
     SAGA_ABOVE_5M_CRITICAL_THRESHOLD,
     SAGA_ABOVE_5M_WARNING_THRESHOLD,
@@ -33,13 +37,13 @@ def fmt_num(value: float | None) -> str:
 def inc_badge(val: float | None) -> str:
     if val is None:
         return ""
-    return " 🟢" if val < 50.0 else " 🟡"
+    return " 🟢" if val < INCIDENT_WARNING_THRESHOLD else " 🟡"
 
 
 def polling_processed_badge(val: int | None) -> str:
-    if val is None or val < 8_500_000:
+    if val is None or val < POLLING_PROCESSED_WARNING_THRESHOLD:
         return "🟢"
-    if val < 10_500_000:
+    if val < POLLING_PROCESSED_CRITICAL_THRESHOLD:
         return "🟡"
     return "🔴"
 
@@ -172,7 +176,7 @@ def format_flagship_report(data: FlagshipReportData) -> str:
             peak_emoji = (
                 "🔴"
                 if inst.points_above_90 >= RDS_SUSTAINED_POINTS
-                or (inst.current_pct is not None and inst.current_pct >= 90.0)
+                or (inst.current_pct is not None and inst.current_pct >= RDS_CPU_CRITICAL_PCT)
                 else "🟡"
             )
             rds_lines.append(f"**{inst.name}:** {inst.peak_pct:.3f}% {peak_emoji}  ")

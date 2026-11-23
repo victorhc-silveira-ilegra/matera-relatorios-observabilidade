@@ -8,10 +8,12 @@ from app.domain.flagship.models import FlagshipReportData
 LAG_IGNORE_THRESHOLD = 10.0
 LAG_WARNING_THRESHOLD = 500.0
 LAG_CRITICAL_THRESHOLD = 1000.0
+INCIDENT_WARNING_THRESHOLD = 50.0
 RESTART_CRITICAL_THRESHOLD = 3.0
 POLLING_CRITICAL_THRESHOLD = 80
 POLLING_PROCESSED_WARNING_THRESHOLD = 8_500_000
 POLLING_PROCESSED_CRITICAL_THRESHOLD = 10_500_000
+RDS_CPU_CRITICAL_PCT = 90.0
 RDS_SUSTAINED_POINTS = 3
 PRD_ERROR_WARNING_PCT = 5.0
 PRD_ERROR_CRITICAL_PCT = 20.0
@@ -93,6 +95,9 @@ def evaluate_prd_status(data: FlagshipReportData) -> EnvironmentStatus:
         elif prd.lag >= LAG_WARNING_THRESHOLD:
             warning_reasons.append(f"Lag moderado ({prd.lag:.0f})")
 
+    if prd.incidents is not None and prd.incidents >= INCIDENT_WARNING_THRESHOLD:
+        warning_reasons.append(f"Incidentes elevados ({prd.incidents:.0f})")
+
     max_restarts = max((r.restarts for r in prd.restarts), default=0.0)
     if max_restarts >= RESTART_CRITICAL_THRESHOLD:
         critical_reasons.append(f"Crash loop em pod (restarts={max_restarts:.2f})")
@@ -118,7 +123,9 @@ def evaluate_prd_status(data: FlagshipReportData) -> EnvironmentStatus:
         critical_reasons.append(f"Polling acumulado crítico ({prd.polling_total})")
 
     for inst in data.rds.peaks_above_90:
-        if inst.points_above_90 >= RDS_SUSTAINED_POINTS or (inst.current_pct is not None and inst.current_pct >= 90.0):
+        if inst.points_above_90 >= RDS_SUSTAINED_POINTS or (
+            inst.current_pct is not None and inst.current_pct >= RDS_CPU_CRITICAL_PCT
+        ):
             critical_reasons.append(f"RDS CPU sustentado >= 90% ({inst.name})")
         else:
             warning_reasons.append(f"RDS CPU pico pontual >= 90% ({inst.name})")
@@ -144,6 +151,9 @@ def evaluate_hml_status(data: FlagshipReportData) -> EnvironmentStatus:
             critical_reasons.append(f"Lag massivo ({hml.lag:.0f})")
         elif hml.lag >= LAG_WARNING_THRESHOLD:
             warning_reasons.append(f"Lag moderado ({hml.lag:.0f})")
+
+    if hml.incidents is not None and hml.incidents >= INCIDENT_WARNING_THRESHOLD:
+        warning_reasons.append(f"Incidentes elevados em HML ({hml.incidents:.0f})")
 
     max_restarts = max((r.restarts for r in hml.restarts), default=0.0)
     if max_restarts >= RESTART_CRITICAL_THRESHOLD:

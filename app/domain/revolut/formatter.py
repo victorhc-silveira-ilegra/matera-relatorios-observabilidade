@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.domain.revolut.models import RevolutLatency, RevolutReportData, RevolutServiceError
+from app.domain.time_window import DAILY_WINDOWS, WINDOW_ORDER
 
 
 @dataclass(frozen=True)
@@ -153,7 +154,7 @@ def format_revolut_report(data: RevolutReportData) -> str:
     latest_pag = data.pagador_pix_by_window[-1].count if data.pagador_pix_by_window else 0
 
     status_by_slot = {ws.period_label: ws for ws in data.window_statuses}
-    all_slots = ["08:30h - 10:30h", "10:30h - 13:30h", "13:30h - 16:30h"]
+    all_slots = [f"{DAILY_WINDOWS[k][0]}h - {DAILY_WINDOWS[k][1]}h" for k in WINDOW_ORDER]
     resolved_slots: list[tuple[str, str | None, str | None]] = []
     passed_current = False
     for slot in all_slots:

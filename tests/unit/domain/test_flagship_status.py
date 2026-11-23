@@ -86,6 +86,10 @@ def test_prd_warning_branches() -> None:
     d8.prd.polling_processed = 9000000
     assert evaluate_prd_status(d8).level is HealthLevel.WARNING
 
+    d9 = _healthy_report()
+    d9.prd.incidents = 50.0
+    assert evaluate_prd_status(d9).level is HealthLevel.WARNING
+
 
 def test_prd_critical_branches() -> None:
     d1 = _healthy_report()
@@ -147,3 +151,7 @@ def test_hml_warning_and_critical_branches() -> None:
     d_ticket = _healthy_report()
     d_ticket.chamados_hml = "INC-1234"
     assert evaluate_hml_status(d_ticket).level is HealthLevel.WARNING
+
+    d_hml_inc = _healthy_report()
+    d_hml_inc.hml.incidents = 50.0
+    assert evaluate_hml_status(d_hml_inc).level is HealthLevel.WARNING

@@ -7,6 +7,7 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 from playwright.sync_api import Response, sync_playwright
 
 from app.domain.flagship.models import RdsInstanceCpu, RdsMetrics
+from app.domain.flagship.status import RDS_CPU_CRITICAL_PCT
 from app.domain.time_window import TimeWindow
 
 RDS_DISPLAY_NAMES: dict[str, str] = {
@@ -48,7 +49,7 @@ def parse_rds_metric_data(payload: dict[str, Any]) -> RdsMetrics:
         current_val = values[-1] if len(timestamps) >= 2 and timestamps[0] < timestamps[-1] else values[0]
 
         peak_val = max(values)
-        points_above_90 = sum(1 for v in values if v >= 90.0)
+        points_above_90 = sum(1 for v in values if v >= RDS_CPU_CRITICAL_PCT)
         inst = RdsInstanceCpu(
             name=display_name,
             current_pct=round(current_val, 3),
@@ -56,7 +57,7 @@ def parse_rds_metric_data(payload: dict[str, Any]) -> RdsMetrics:
             points_above_90=points_above_90,
         )
         instances.append(inst)
-        if peak_val >= 90.0:
+        if peak_val >= RDS_CPU_CRITICAL_PCT:
             peaks_above_90.append(inst)
 
     instances.sort(key=lambda i: i.current_pct if i.current_pct is not None else -1.0, reverse=True)
