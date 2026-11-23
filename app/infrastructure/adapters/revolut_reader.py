@@ -214,7 +214,7 @@ class RevolutMetricsAdapter:
                 err_count=len(w_with_err),
                 total_services=len(w_with_err) + len(w_without_err),
                 has_ticket=has_ticket if w.key == current_window.key else False,
-                service_error_names=tuple(s.service for s in w_with_err),
+                services_with_errors=tuple(w_with_err),
             )
             window_statuses.append(
                 RevolutWindowStatus(

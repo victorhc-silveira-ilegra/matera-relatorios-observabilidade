@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.domain.revolut.models import RevolutLatency, RevolutReportData
+from app.domain.revolut.models import RevolutLatency, RevolutReportData, RevolutServiceError
 
 
 @dataclass(frozen=True)
@@ -62,26 +62,27 @@ def evaluate_revolut_status(
     err_count: int,
     total_services: int,
     has_ticket: bool,
-    service_error_names: tuple[str, ...] = (),
+    services_with_errors: tuple[RevolutServiceError, ...] = (),
 ) -> RevolutStatusEvaluation:
     pag_p50_badge = latency_badge(pagador_latency.p50_seconds, PAGADOR_P50_THRESHOLD)
     pag_p95_badge = latency_badge(pagador_latency.p95_seconds, PAGADOR_P95_THRESHOLD)
     rec_p50_badge = latency_badge(recebedor_latency.p50_seconds, RECEBEDOR_P50_THRESHOLD)
     rec_p95_badge = latency_badge(recebedor_latency.p95_seconds, RECEBEDOR_P95_THRESHOLD)
 
-    named_badges = (
-        (pag_p50_badge, "Pagador P50"),
-        (pag_p95_badge, "Pagador P95"),
-        (rec_p50_badge, "Recebedor P50"),
-        (rec_p95_badge, "Recebedor P95"),
+    named_metrics = (
+        (pag_p50_badge, "Pagador P50", pagador_latency.p50_seconds),
+        (pag_p95_badge, "Pagador P95", pagador_latency.p95_seconds),
+        (rec_p50_badge, "Recebedor P50", recebedor_latency.p50_seconds),
+        (rec_p95_badge, "Recebedor P95", recebedor_latency.p95_seconds),
     )
-    all_latencies_ok = all(b == "✅" for b, _ in named_badges)
-    critical_latency_names = tuple(name for b, name in named_badges if b == "🔴")
-    critical_details = critical_latency_names + service_error_names
-    critical_events = err_count + len(critical_latency_names)
+    all_latencies_ok = all(b == "✅" for b, _, _ in named_metrics)
+    critical_latency_details = tuple(f"{name}: {fmt_duration(val)}" for b, name, val in named_metrics if b == "🔴")
+    service_error_details = tuple(f"{s.service}: {fmt_log_val(s.value)}" for s in services_with_errors)
+    critical_details = critical_latency_details + service_error_details
+    critical_events = err_count + len(critical_latency_details)
 
-    if critical_latency_names:
-        status_line = "Ambiente instável 🔴 (Ocorrências críticas identificadas no período)."
+    if critical_latency_details:
+        status_line = "Ambiente em atenção 🟡 (Ocorrências críticas identificadas no período)."
         if err_count > 0:
             eventos_line = f"Identificados {err_count} serviço(s) com erros nos logs e latência fora do limite crítico."
         else:
@@ -133,7 +134,7 @@ def format_revolut_report(data: RevolutReportData) -> str:
         err_count=err_count,
         total_services=total_services,
         has_ticket=has_ticket,
-        service_error_names=tuple(s.service for s in data.services_with_errors),
+        services_with_errors=tuple(data.services_with_errors),
     )
 
     rec_lines = [f"{wc.window_label} - {wc.count}" for wc in data.recebedor_pix_by_window]

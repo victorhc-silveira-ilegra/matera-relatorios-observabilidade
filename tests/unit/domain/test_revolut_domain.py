@@ -100,7 +100,8 @@ def test_format_revolut_report_warning_and_critical() -> None:
     rendered_service_warn = format_revolut_report(service_warn_data)
     assert "Ambiente em atenção 🟡" in rendered_service_warn
     assert "Identificados 1 serviço(s) com erros nos logs em acompanhamento contínuo." in rendered_service_warn
-    assert "13:30h - 16:30h  🟡         1 (spi-dispute)     Não" in rendered_service_warn
+    assert "13:30h - 16:30h  🔴         1 (spi-dispute: 223.7)" not in rendered_service_warn
+    assert "13:30h - 16:30h  🟡         1 (spi-dispute: 223.7)  Não" in rendered_service_warn
 
     crit_data = RevolutReportData(
         date_full="12/11/2026",
@@ -115,7 +116,7 @@ def test_format_revolut_report_warning_and_critical() -> None:
         next_analysis_label="12/11/2026 às 13:30h",
     )
     rendered_crit = format_revolut_report(crit_data)
-    assert "Ambiente instável 🔴" in rendered_crit
+    assert "Ambiente em atenção 🟡 (Ocorrências críticas identificadas no período)." in rendered_crit
     assert "Identificados 2 serviço(s) com erros nos logs e latência fora do limite crítico." in rendered_crit
     assert "spi-main - 250.0 🔴" in rendered_crit
     assert "spi-dispute - 120.0 🔴" in rendered_crit
@@ -133,20 +134,20 @@ def test_format_revolut_report_warning_and_critical() -> None:
         ],
         services_without_errors=[RevolutServiceError("spi-main", 0.0)],
         window_statuses=[
-            RevolutWindowStatus("08:30h - 10:30h", "🔴", 1, ("Recebedor P50",)),
-            RevolutWindowStatus("10:30h - 13:30h", "🔴", 1, ("Recebedor P50",)),
-            RevolutWindowStatus("13:30h - 16:30h", "🔴", 2, ("Recebedor P50", "Recebedor P95")),
+            RevolutWindowStatus("08:30h - 10:30h", "🔴", 1, ("Recebedor P50: 1.362s",)),
+            RevolutWindowStatus("10:30h - 13:30h", "🔴", 1, ("Recebedor P50: 1.380s",)),
+            RevolutWindowStatus("13:30h - 16:30h", "🔴", 2, ("Recebedor P50: 1.400s", "Recebedor P95: 2.468s")),
         ],
         next_analysis_label="próximo dia útil às 10:30h",
     )
     rendered_rec_crit = format_revolut_report(recebedor_crit_data)
-    assert "Ambiente instável 🔴" in rendered_rec_crit
+    assert "Ambiente em atenção 🟡 (Ocorrências críticas identificadas no período)." in rendered_rec_crit
     assert "Latência crítica identificada no período (sem erros nos logs)." in rendered_rec_crit
     assert "1.400s 🔴" in rendered_rec_crit
     assert "2.468s 🔴" in rendered_rec_crit
-    assert "08:30h - 10:30h  🔴         1 (Recebedor P50)                 Não" in rendered_rec_crit
-    assert "10:30h - 13:30h  🔴         1 (Recebedor P50)                 Não" in rendered_rec_crit
-    assert "13:30h - 16:30h  🔴         2 (Recebedor P50, Recebedor P95)  Não" in rendered_rec_crit
+    assert "08:30h - 10:30h  🔴         1 (Recebedor P50: 1.362s)                         Não" in rendered_rec_crit
+    assert "10:30h - 13:30h  🔴         1 (Recebedor P50: 1.380s)                         Não" in rendered_rec_crit
+    assert "13:30h - 16:30h  🔴         2 (Recebedor P50: 1.400s, Recebedor P95: 2.468s)  Não" in rendered_rec_crit
 
     recebedor_warn_data = RevolutReportData(
         date_full="23/11/2026",

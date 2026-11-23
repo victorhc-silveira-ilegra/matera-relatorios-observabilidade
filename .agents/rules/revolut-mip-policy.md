@@ -73,5 +73,5 @@ O relatorio acumula os valores historicos do dia ate a janela corrente.
 
 A avaliacao de saude do ambiente Revolut segue o principio de proporcionalidade ao impacto:
 1. **Ambiente estavel ✅**: Ausencia de erros nos logs dos 12 servicos SPI, latencias Pagador/Recebedor dentro dos tetos operacionais e sem chamados ativos.
-2. **Ambiente em atencao 🟡**: Presenca de servicos com ocorrencias nos logs (`🔴 Com Erros`), desvios pontuais de latencia sem violacao critica ou chamados abertos em acompanhamento.
-3. **Ambiente instavel 🔴**: Latencias violando limites criticos (`has_critical_latency`) ou incidentes graves reportados por clientes.
+2. **Ambiente em atencao 🟡**: Presenca de servicos com ocorrencias nos logs (`🔴 Com Erros`), desvios ou violacoes criticas de latencia, ou chamados abertos em acompanhamento.
+3. **Ambiente instavel 🔴**: Reservado para indisponibilidade generalizada ou incidentes graves reportados por clientes.
