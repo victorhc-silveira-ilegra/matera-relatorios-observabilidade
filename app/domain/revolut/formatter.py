@@ -1,11 +1,20 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from app.domain.revolut.models import RevolutReportData
 
-PAGADOR_P50_LIMIT_S = 0.9
-PAGADOR_P95_LIMIT_S = 1.5
-RECEBEDOR_P50_LIMIT_S = 1.4
-RECEBEDOR_P95_LIMIT_S = 2.3
+
+@dataclass(frozen=True)
+class LatencyThreshold:
+    warning_s: float
+    critical_s: float
+
+
+PAGADOR_P50_THRESHOLD = LatencyThreshold(warning_s=0.6, critical_s=0.9)
+PAGADOR_P95_THRESHOLD = LatencyThreshold(warning_s=1.2, critical_s=1.5)
+RECEBEDOR_P50_THRESHOLD = LatencyThreshold(warning_s=1.0, critical_s=1.3)
+RECEBEDOR_P95_THRESHOLD = LatencyThreshold(warning_s=2.0, critical_s=2.4)
 
 
 def fmt_duration(seconds: float | None) -> str:
@@ -28,12 +37,12 @@ def fmt_log_val(val: float) -> str:
     return f"{val:.2f}".rstrip("0").rstrip(".")
 
 
-def latency_badge(seconds: float | None, limit_s: float) -> str:
+def latency_badge(seconds: float | None, threshold: LatencyThreshold) -> str:
     if seconds is None:
         return "⚠️"
-    if seconds <= limit_s:
+    if seconds < threshold.warning_s:
         return "✅"
-    if seconds <= limit_s * 1.25:
+    if seconds < threshold.critical_s:
         return "🟡"
     return "🔴"
 
@@ -44,10 +53,10 @@ def format_revolut_report(data: RevolutReportData) -> str:
     rec_p50 = data.recebedor_latency.p50_seconds
     rec_p95 = data.recebedor_latency.p95_seconds
 
-    pag_p50_badge = latency_badge(pag_p50, PAGADOR_P50_LIMIT_S)
-    pag_p95_badge = latency_badge(pag_p95, PAGADOR_P95_LIMIT_S)
-    rec_p50_badge = latency_badge(rec_p50, RECEBEDOR_P50_LIMIT_S)
-    rec_p95_badge = latency_badge(rec_p95, RECEBEDOR_P95_LIMIT_S)
+    pag_p50_badge = latency_badge(pag_p50, PAGADOR_P50_THRESHOLD)
+    pag_p95_badge = latency_badge(pag_p95, PAGADOR_P95_THRESHOLD)
+    rec_p50_badge = latency_badge(rec_p50, RECEBEDOR_P50_THRESHOLD)
+    rec_p95_badge = latency_badge(rec_p95, RECEBEDOR_P95_THRESHOLD)
 
     total_services = len(data.services_with_errors) + len(data.services_without_errors)
     err_count = len(data.services_with_errors)
@@ -63,7 +72,10 @@ def format_revolut_report(data: RevolutReportData) -> str:
 
     if has_critical_latency:
         status_line = "Ambiente instável 🔴 (Ocorrências críticas identificadas no período)."
-        eventos_line = f"Identificados {err_count} serviço(s) com erros nos logs ou latência fora do limite crítico."
+        if err_count > 0:
+            eventos_line = f"Identificados {err_count} serviço(s) com erros nos logs e latência fora do limite crítico."
+        else:
+            eventos_line = "Latência crítica identificada no período (sem erros nos logs)."
         period_badge = "🔴"
     elif err_count > 0 or not all_latencies_ok or has_ticket:
         if err_count > 0:

@@ -85,9 +85,9 @@ def test_format_report_variants() -> None:
         prd=PrdMetrics(
             lag=1200.0,
             polling_processed=9000000,
-            polling_total=12000,
-            saga_total=15,
-            saga_above_5m=1,
+            polling_total=80,
+            saga_total=2500,
+            saga_above_5m=5,
             incidents=80.0,
         ),
         rds=RdsMetrics(
@@ -106,8 +106,8 @@ def test_format_report_variants() -> None:
     assert "**Incidentes (últimos 30 min):** 80 🟡" in rendered
     assert "**db-1:** 92.000% 🟡" in rendered
     assert "**db-2:** 96.000% 🔴" in rendered
-    assert "**Total de integrações:** 15 🟡" in rendered
-    assert "**Integrações acima de 5 min:** 1 🔴" in rendered
+    assert "**Total de integrações:** 2.500 🟡" in rendered
+    assert "**Integrações acima de 5 min:** 5 🟡" in rendered
     assert "Sem dados disponíveis" in rendered
 
     data_err = FlagshipReportData(
@@ -115,10 +115,12 @@ def test_format_report_variants() -> None:
         hour_label="10:30h",
         window_label="08:30–10:30",
         hml=HmlMetrics(lag=50.0),
-        prd=PrdMetrics(lag=50.0, polling_processed=11000000, polling_total=200),
+        prd=PrdMetrics(lag=50.0, polling_processed=11000000, polling_total=10, saga_total=10000, saga_above_5m=100),
         rds=RdsMetrics(error="Falha RDS"),
     )
     rendered_err = format_flagship_report(data_err)
     assert "Erro na coleta: Falha RDS" in rendered_err
     assert "50 🟢" in rendered_err
     assert "**Registros PROCESSED:** 11.000.000 🔴" in rendered_err
+    assert "**Total de integrações:** 10.000 🔴" in rendered_err
+    assert "**Integrações acima de 5 min:** 100 🔴" in rendered_err

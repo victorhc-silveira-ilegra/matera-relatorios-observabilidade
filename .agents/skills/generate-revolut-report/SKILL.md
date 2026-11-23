@@ -32,8 +32,8 @@ Esta habilidade orienta a execucao, inspecao e depuracao da geracao de relatorio
 ## Checklist de Validacao das Metricas
 
 1. **Latencias PIX**:
-   - Pagador: P50 $\le 900\text{ms}$ e P95 $\le 1.5\text{s}$ com selo `✅`.
-   - Recebedor: P50 $\le 1.4\text{s}$ e P95 $\le 2.3\text{s}$ com selo `✅`.
+   - Pagador: P50 `< 0.6s` (`✅`), `0.6s–0.9s` (`🟡`), `>= 0.9s` (`🔴`) e P95 `< 1.2s` (`✅`), `1.2s–1.5s` (`🟡`), `>= 1.5s` (`🔴`).
+   - Recebedor: P50 `< 1.0s` (`✅`), `1.0s–1.3s` (`🟡`), `>= 1.3s` (`🔴`) e P95 `< 2.0s` (`✅`), `2.0s–2.4s` (`🟡`), `>= 2.4s` (`🔴`).
 2. **Volumes de PIX**:
    - Confirmar se as contagens aproximadas refletem os blocos acumulados do dia (`08:30 a 10:30`, `10:30 a 13:30`, `13:30 a 16:30`).
 3. **Servicos SPI (Ultimos 15m)**:

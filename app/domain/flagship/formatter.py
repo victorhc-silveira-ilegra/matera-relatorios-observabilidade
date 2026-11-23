@@ -6,8 +6,10 @@ from app.domain.flagship.status import (
     LAG_IGNORE_THRESHOLD,
     LAG_WARNING_THRESHOLD,
     POLLING_CRITICAL_THRESHOLD,
-    POLLING_WARNING_THRESHOLD,
     RDS_SUSTAINED_POINTS,
+    SAGA_ABOVE_5M_CRITICAL_THRESHOLD,
+    SAGA_ABOVE_5M_WARNING_THRESHOLD,
+    SAGA_CRITICAL_THRESHOLD,
     SAGA_WARNING_THRESHOLD,
     evaluate_hml_status,
     evaluate_prd_status,
@@ -119,8 +121,18 @@ def format_flagship_report(data: FlagshipReportData) -> str:
 
     saga_total = data.prd.saga_total
     saga_5m = data.prd.saga_above_5m
-    saga_total_emoji = "🟢" if (saga_total or 0) < SAGA_WARNING_THRESHOLD else "🟡"
-    saga_5m_emoji = "🟢" if (saga_5m or 0) == 0 else "🔴"
+    if (saga_total or 0) >= SAGA_CRITICAL_THRESHOLD:
+        saga_total_emoji = "🔴"
+    elif (saga_total or 0) >= SAGA_WARNING_THRESHOLD:
+        saga_total_emoji = "🟡"
+    else:
+        saga_total_emoji = "🟢"
+    if (saga_5m or 0) >= SAGA_ABOVE_5M_CRITICAL_THRESHOLD:
+        saga_5m_emoji = "🔴"
+    elif (saga_5m or 0) >= SAGA_ABOVE_5M_WARNING_THRESHOLD:
+        saga_5m_emoji = "🟡"
+    else:
+        saga_5m_emoji = "🟢"
     saga_lines = [
         "🔄 **INTEGRAÇÃO SAGA**",
         f"**Total de integrações:** {fmt_int(saga_total)} {saga_total_emoji}  ",
@@ -133,12 +145,7 @@ def format_flagship_report(data: FlagshipReportData) -> str:
         api_lines[-1] = api_lines[-1].rstrip()
 
     polling_total = data.prd.polling_total or 0
-    if polling_total >= POLLING_CRITICAL_THRESHOLD:
-        polling_emoji = "🔴"
-    elif polling_total >= POLLING_WARNING_THRESHOLD:
-        polling_emoji = "🟡"
-    else:
-        polling_emoji = "🟢"
+    polling_emoji = "🔴" if polling_total >= POLLING_CRITICAL_THRESHOLD else "🟢"
 
     polling_badge = polling_processed_badge(data.prd.polling_processed)
     dados_lines = [

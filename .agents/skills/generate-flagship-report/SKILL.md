@@ -35,7 +35,7 @@ Esta habilidade orienta a execucao, inspecao e depuracao da geracao de relatorio
 ## Checklist de Validacao das Metricas
 
 1. **Incidentes em PRD**: Verificar se o valor de incidentes reflete a janela dos ultimos 30 minutos (`[30m]`), tipicamente com valores baixos (`~5.1 🟢` ou `~8.1 🟢`). Valores inflados (`> 100`) indicam uso incorreto de janela acumulada.
-2. **Incidentes em HML**: Verificar se exibe `Incidentes (últimas 5h): No Data` ou a contagem correta da janela de 5 horas.
-3. **Restarts em HML**: Confirmar exibicao de `Restarts: Sem ocorrências` ou listagem de pods no intervalo da janela.
-4. **Integracao SAGA**: Confirmar se `Total de integracoes < 10` e `Integracoes acima de 5 min: 0` mantem o semaforo verde `🟢`.
+2. **Incidentes em HML**: Verificar se exibe `Incidentes (últimos 30 min): No Data` ou a contagem correta da janela de 30 minutos (`[30m]`, Painel 6 de `OCgyltPVk`).
+3. **Restarts em HML**: Confirmar exibicao de `Restarts: Sem ocorrências` ou listagem de pods em execucao no intervalo da janela.
+4. **Integracao SAGA**: Confirmar se `Total de integracoes < 2000` e `Integracoes acima de 5 min: 0` mantem o semaforo verde `🟢`.
 5. **Status do Ambiente**: PRD so deve ser marcado como `🟡 Atencao` se houver justificativa real (chamado ativo, erro percentual elevado, picos de CPU ou lag).

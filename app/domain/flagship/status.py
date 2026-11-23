@@ -9,8 +9,7 @@ LAG_IGNORE_THRESHOLD = 10.0
 LAG_WARNING_THRESHOLD = 500.0
 LAG_CRITICAL_THRESHOLD = 1000.0
 RESTART_CRITICAL_THRESHOLD = 3.0
-POLLING_WARNING_THRESHOLD = 100
-POLLING_CRITICAL_THRESHOLD = 10000
+POLLING_CRITICAL_THRESHOLD = 80
 POLLING_PROCESSED_WARNING_THRESHOLD = 8_500_000
 POLLING_PROCESSED_CRITICAL_THRESHOLD = 10_500_000
 RDS_SUSTAINED_POINTS = 3
@@ -19,8 +18,10 @@ PRD_ERROR_CRITICAL_PCT = 20.0
 PRD_WARN_WARNING_PCT = 20.0
 ROUTING_ERROR_WARNING_THRESHOLD = 10
 API_HITS_WARNING_THRESHOLD = 10
-SAGA_WARNING_THRESHOLD = 10
-SAGA_CRITICAL_THRESHOLD = 100
+SAGA_WARNING_THRESHOLD = 2000
+SAGA_CRITICAL_THRESHOLD = 10000
+SAGA_ABOVE_5M_WARNING_THRESHOLD = 1
+SAGA_ABOVE_5M_CRITICAL_THRESHOLD = 100
 
 
 class HealthLevel(StrEnum):
@@ -98,9 +99,11 @@ def evaluate_prd_status(data: FlagshipReportData) -> EnvironmentStatus:
     elif max_restarts > 0:
         warning_reasons.append(f"Restarts pontuais de pods ({max_restarts:.2f})")
 
-    if prd.saga_above_5m and prd.saga_above_5m > 0:
+    if prd.saga_above_5m and prd.saga_above_5m >= SAGA_ABOVE_5M_CRITICAL_THRESHOLD:
         critical_reasons.append(f"SAGA > 5 min ({prd.saga_above_5m})")
-    elif prd.saga_total and prd.saga_total >= SAGA_CRITICAL_THRESHOLD:
+    elif prd.saga_above_5m and prd.saga_above_5m >= SAGA_ABOVE_5M_WARNING_THRESHOLD:
+        warning_reasons.append(f"SAGA > 5 min ({prd.saga_above_5m})")
+    if prd.saga_total and prd.saga_total >= SAGA_CRITICAL_THRESHOLD:
         critical_reasons.append(f"Fila SAGA crítica ({prd.saga_total})")
     elif prd.saga_total and prd.saga_total >= SAGA_WARNING_THRESHOLD:
         warning_reasons.append(f"Integrações SAGA pendentes ({prd.saga_total})")
@@ -111,11 +114,8 @@ def evaluate_prd_status(data: FlagshipReportData) -> EnvironmentStatus:
         elif prd.polling_processed >= POLLING_PROCESSED_WARNING_THRESHOLD:
             warning_reasons.append(f"Volume elevado DTW_TR_POLLING_ENTRY ({prd.polling_processed})")
 
-    if prd.polling_total is not None:
-        if prd.polling_total >= POLLING_CRITICAL_THRESHOLD:
-            critical_reasons.append(f"Polling acumulado crítico ({prd.polling_total})")
-        elif prd.polling_total >= POLLING_WARNING_THRESHOLD:
-            warning_reasons.append(f"Polling acumulado moderado ({prd.polling_total})")
+    if prd.polling_total is not None and prd.polling_total >= POLLING_CRITICAL_THRESHOLD:
+        critical_reasons.append(f"Polling acumulado crítico ({prd.polling_total})")
 
     for inst in data.rds.peaks_above_90:
         if inst.points_above_90 >= RDS_SUSTAINED_POINTS or (inst.current_pct is not None and inst.current_pct >= 90.0):

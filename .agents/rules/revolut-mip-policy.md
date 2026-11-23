@@ -16,14 +16,14 @@ O cluster de monitoramento da Revolut e acessivel exclusivamente via PrivateLink
 
 ## 2. Limiares Operacionais de Latencia PIX
 
-Os tempos de processamento das transacoes PIX sao avaliados por percentis (P50 e P95) contra os acordos operacionais:
+Os tempos de processamento das transacoes PIX sao avaliados por percentis (P50 e P95) diretamente alinhados aos `thresholds.steps` dos paineis do Grafana (`t-trHM_Mz` para Pagador e `UesW0m_Mk` para Recebedor):
 
-| Fluxo | Percentil | Teto Operacional | Status Normal | Status Degradado |
-| :--- | :--- | :--- | :---: | :---: |
-| **Pagador** | P50 | $\le 0.90\text{s}$ ($900\text{ms}$) | ✅ | 🔴 |
-| **Pagador** | P95 | $\le 1.50\text{s}$ ($1500\text{ms}$) | ✅ | 🔴 |
-| **Recebedor** | P50 | $\le 1.40\text{s}$ ($1400\text{ms}$) | ✅ | 🔴 |
-| **Recebedor** | P95 | $\le 2.30\text{s}$ ($2300\text{ms}$) | ✅ | 🔴 |
+| Fluxo | Percentil | Verde (✅) | Amarelo (🟡) | Vermelho (🔴) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Pagador** | P50 | $< 0.60\text{s}$ ($600\text{ms}$) | $0.60\text{s} \le x < 0.90\text{s}$ | $\ge 0.90\text{s}$ |
+| **Pagador** | P95 | $< 1.20\text{s}$ ($1200\text{ms}$) | $1.20\text{s} \le x < 1.50\text{s}$ | $\ge 1.50\text{s}$ |
+| **Recebedor** | P50 | $< 1.00\text{s}$ ($1000\text{ms}$) | $1.00\text{s} \le x < 1.30\text{s}$ | $\ge 1.30\text{s}$ |
+| **Recebedor** | P95 | $< 2.00\text{s}$ ($2000\text{ms}$) | $2.00\text{s} \le x < 2.40\text{s}$ | $\ge 2.40\text{s}$ |
 
 As latencias abaixo de 1s sao exibidas em milissegundos (`254.02ms`), e valores iguais ou superiores a 1s sao exibidos em segundos (`1.643s`).
 

@@ -24,8 +24,8 @@ Janelas cumulativas de erros (`routing_errors`) e chamadas de API (`api_hits`) e
   - `< 50`: `🟢`
   - `>= 50`: `🟡`
 - **Lag Kafka (`Grafana HML`)**: Soma de lag de consumidores excluindo grupos canary/backup. Valores `<= 10.0` sao omitidos da impressao na tela. Valores entre `10` e `500` sao impressos com badge verde `🟢`. Valores `>= 500` exibem `🟡` e `>= 1000` exibem `🔴`.
-- **Restarts de Pods (`Grafana HML`)**: Coleta no intervalo dinâmico da janela (`duration_promql`, ex.: `[120m]` para 08:30–10:30 e `[180m]` para 10:30–13:30 e 13:30–16:30):
-  `increase(kube_pod_container_status_restarts_total{namespace="dtw-hml"}[<duration_promql>])`
+- **Restarts de Pods (`Grafana HML`)**: Coleta no intervalo dinâmico da janela (`duration_promql`, ex.: `[120m]` para 08:30–10:30 e `[180m]` para 10:30–13:30 e 13:30–16:30), filtrando apenas pods em execucao:
+  `increase(kube_pod_container_status_restarts_total{namespace="dtw-hml"}[<duration_promql>]) and kube_pod_container_status_running{namespace="dtw-hml"} > 0`
 
 ### Producao (PRD)
 - **Logs (`OpenSearch PRD`)**: Distribuicao percentual e contagem absoluta de `ERROR`.
@@ -37,13 +37,13 @@ Janelas cumulativas de erros (`routing_errors`) e chamadas de API (`api_hits`) e
   - `< 50`: `🟢`
   - `>= 50`: `🟡`
 - **Lag Kafka (`Grafana PRD`)**: Valores `<= 10.0` sao omitidos da impressao na tela. Valores entre `10` e `500` exibem `🟢`. Valores entre `500` e `1000` exibem `🟡`, e `>= 1000` exibem `🔴`.
-- **Restarts de Pods (`Grafana PRD`)**: Coleta no intervalo dinâmico da janela (`duration_promql`, ex.: `[120m]` para 08:30–10:30 e `[180m]` para 10:30–13:30 e 13:30–16:30):
-  `increase(kube_pod_container_status_restarts_total{namespace="dtw-prod"}[<duration_promql>])`.
-- **Integracao SAGA (`Grafana PRD`, MySQL `4hs8MXdIz`)**:
-  - `Total de integracoes`: `select count(*) from STDIN_CONTROLE_SAGA_INTEGRACAO where integrated = 'N'`.
-  - `Integracoes acima de 5 min`: `WHERE integrated = 'N' AND DATE_ADD(created, INTERVAL 3 HOUR) <= NOW() - INTERVAL 5 MINUTE`.
-- **Monitoramento de Dados (`Grafana PRD`, MySQL `T2rqmE8Sk`, Painel 4)**:
-  - `DTW_TR_POLLING_ENTRY`: `SELECT COUNT(*) FROM DTW_TR_POLLING_ENTRY WHERE PROCESSED IN (0,1)` (PROCESSED com limiares `< 8.5M 🟢`, `8.5M–10.5M 🟡`, `>= 10.5M 🔴`) e `WHERE PROCESSED = 0` (Total pendente).
+- **Restarts de Pods (`Grafana PRD`, Dashboard `lWYZEDY4z2`)**: Coleta no intervalo dinâmico da janela (`duration_promql`, ex.: `[120m]` para 08:30–10:30 e `[180m]` para 10:30–13:30 e 13:30–16:30), filtrando apenas pods em execucao:
+  `increase(kube_pod_container_status_restarts_total{namespace="dtw-prod"}[<duration_promql>]) and kube_pod_container_status_running{namespace="dtw-prod"} > 0`.
+- **Integracao SAGA (`Grafana PRD`, Dashboard `0lekC7CVk`, MySQL `4hs8MXdIz`)**:
+  - `Total de integracoes` (Painel 4): `select count(*) from STDIN_CONTROLE_SAGA_INTEGRACAO where integrated = 'N'` (`< 2000` `🟢`, `2000–9999` `🟡`, `>= 10000` `🔴`).
+  - `Integracoes acima de 5 min` (Painel 5): `WHERE integrated = 'N' AND DATE_ADD(created, INTERVAL 3 HOUR) <= NOW() - INTERVAL 5 MINUTE` (`0` `🟢`, `1–99` `🟡`, `>= 100` `🔴`).
+- **Monitoramento de Dados (`Grafana PRD`, Dashboard `BKo_kE8Sz`, MySQL `T2rqmE8Sk`)**:
+  - `DTW_TR_POLLING_ENTRY`: `SELECT COUNT(*) FROM DTW_TR_POLLING_ENTRY WHERE PROCESSED IN (0,1)` (Painel 4: `< 8.5M 🟢`, `8.5M–10.5M 🟡`, `>= 10.5M 🔴`) e `WHERE PROCESSED = 0` (Painel 8: `< 80 🟢`, `>= 80 🔴`).
 - **RDS CPUUtilization (`AWS CloudWatch`)**: Scraper headless no dashboard publico `Flagship-BlackFriday`. Consumo atual e deteccao de picos `>= 90%`.
 
 ---
@@ -55,19 +55,19 @@ Janelas cumulativas de erros (`routing_errors`) e chamadas de API (`api_hits`) e
   - `ERROR >= 20%` nos logs de producao.
   - `lag >= 1000` no Kafka.
   - Crash loop em pods (`restarts >= 3.0`).
-  - SAGA com integracoes estagnadas (`acima de 5 min > 0`) ou fila acumulada critica (`total >= 100`).
-  - Tabela Polling com volume critico (`PROCESSED >= 10.500.000` ou `total pendente >= 10.000`).
+  - SAGA com integracoes estagnadas criticas (`acima de 5 min >= 100`) ou fila acumulada critica (`total >= 10000`).
+  - Tabela Polling com volume critico (`PROCESSED >= 10.500.000` ou `total pendente >= 80`).
   - RDS CPU com pico sustentado (`>= 3` pontos `>= 90%` na janela ou consumo atual `>= 90%`).
 - **🟡 Atencao**:
   - `5% <= ERROR < 20%` ou `WARN >= 20%`.
   - Erros recorrentes em producer (`routing_errors >= 10`) ou API hits (`api_hits >= 10`).
   - Lag moderado (`500 <= lag < 1000`).
   - Restarts pontuais (`0 < restarts < 3.0`).
-  - SAGA acumulado em processamento (`10 <= total < 100` e `acima_5m == 0`).
-  - Tabela Polling com volume elevado (`8.500.000 <= PROCESSED < 10.500.000` ou `100 <= total pendente < 10.000`).
+  - SAGA com integracoes acima de 5 min (`1 <= acima_5m < 100`) ou fila acumulada em atencao (`2000 <= total < 10000`).
+  - Tabela Polling com volume elevado (`8.500.000 <= PROCESSED < 10.500.000`).
   - RDS CPU com pico pontual (`1 <= pontos < 3`).
   - Chamado ativo informado em `--chamados-prd`.
-- **🟢 Estavel**: Quando nenhum dos criterios acima e atingido (ex.: `lag < 500`, `SAGA total < 10`, `Polling < 100`, sem picos de CPU).
+- **🟢 Estavel**: Quando nenhum dos criterios acima e atingido (ex.: `lag < 500`, `SAGA total < 2000`, `acima_5m == 0`, `Polling pendente < 80`, sem picos de CPU).
 
 ### Homologacao (HML)
 - **🔴 Instavel**: Exclusivamente por Lag massivo no Kafka (`lag >= 1000`). Erros de log e restarts de pods nao caracterizam instabilidade em homologacao.

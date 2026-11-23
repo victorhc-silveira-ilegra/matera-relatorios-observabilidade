@@ -21,10 +21,12 @@ Todas as IAs, agentes autonomos e desenvolvedores devem seguir estritamente as r
    - O dominio e a aplicacao nao realizam chamadas de logging nem acessam bibliotecas de infraestrutura.
    - Separacao estrita entre produto final (relatorio entregue em stdout) e logs operacionais.
 8. **Regras de Negocio Deterministicas**:
-   - **Flagship (DTW)**: PRD incidentes em janela pontual `[30m]` (Painel 6 de `OCgyltPVk`), HML incidentes em `[5h]` e restarts em `[6h]`. SAGA com `total < 10` e `acima_5m == 0` permanece estavel (`🟢`). Polling com `total < 100` e estavel (`🟢`).
-   - **Revolut (MIP)**: Acesso obrigatorio via proxy HTTP (`REVOLUT_HTTP_PROXY`). Latencias PIX Pagador (P50 <= 0.9s, P95 <= 1.5s) e Recebedor (P50 <= 1.4s, P95 <= 2.3s). Gatilho progressivo para 12 servicos SPI: janela `[15m]`, refinando para `[5m]` e `[1m]` em caso de spike para detectar normalizacao recente.
+   - **Flagship (DTW)**: PRD e HML incidentes em janela pontual `[30m]` (Painel 6 de `OCgyltPVk`). Restarts filtrados por pods em execucao (`kube_pod_container_status_running > 0`). SAGA (`0lekC7CVk`): `total < 2000` (`🟢`), `2000–9999` (`🟡`), `>= 10000` (`🔴`); `acima_5m`: `0` (`🟢`), `1–99` (`🟡`), `>= 100` (`🔴`). Polling (`BKo_kE8Sz`): `PROCESSED < 8.5M` (`🟢`), `8.5M–10.5M` (`🟡`), `>= 10.5M` (`🔴`); `PROCESSED = 0` (`total < 80` `🟢`, `>= 80` `🔴`).
+   - **Revolut (MIP)**: Acesso obrigatorio via proxy HTTP (`REVOLUT_HTTP_PROXY`). Latencias PIX Pagador (P50: < 0.6s verde, 0.6s–0.9s amarelo, >= 0.9s vermelho; P95: < 1.2s verde, 1.2s–1.5s amarelo, >= 1.5s vermelho) e Recebedor (P50: < 1.0s verde, 1.0s–1.3s amarelo, >= 1.3s vermelho; P95: < 2.0s verde, 2.0s–2.4s amarelo, >= 2.4s vermelho). Gatilho progressivo para 12 servicos SPI: janela `[15m]`, refinando para `[5m]` e `[1m]` em caso de spike para detectar normalizacao recente.
 9. **Formato Canonico dos Relatorios**:
    - O texto dos relatorios gerados no stdout deve seguir estritamente o layout padronizado de negocio com emojis e marcadores oficiais estabelecidos pelos clientes.
+10. **Alinhamento Continuo com Grafana**:
+   - Toda query PromQL/SQL, filtro, janela de avaliacao e limiar de cor (`✅`/`🟢`, `🟡`, `🔴`) deve espelhar fielmente os paineis reais dos dashboards do Grafana de cada cliente. Antes de criar ou alterar regras de coleta ou thresholds, os agentes devem consultar os dashboards via API (`/api/dashboards/uid/<uid>`) para validar `targets`, `thresholds.steps` e `reduceOptions.calcs`.
 
 ## Comandos Operacionais
 

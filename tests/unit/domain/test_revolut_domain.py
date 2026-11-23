@@ -1,4 +1,12 @@
-from app.domain.revolut.formatter import fmt_duration, format_revolut_report, latency_badge
+from app.domain.revolut.formatter import (
+    PAGADOR_P50_THRESHOLD,
+    PAGADOR_P95_THRESHOLD,
+    RECEBEDOR_P50_THRESHOLD,
+    RECEBEDOR_P95_THRESHOLD,
+    fmt_duration,
+    format_revolut_report,
+    latency_badge,
+)
 from app.domain.revolut.models import (
     RevolutLatency,
     RevolutReportData,
@@ -10,9 +18,19 @@ from app.domain.time_window import WindowCount
 def test_revolut_helpers() -> None:
     assert fmt_duration(None) == "No Data"
     assert fmt_duration(0.5) == "500ms"
-    assert latency_badge(None, 1.0) == "⚠️"
-    assert latency_badge(1.1, 1.0) == "🟡"
-    assert latency_badge(1.5, 1.0) == "🔴"
+    assert latency_badge(None, PAGADOR_P50_THRESHOLD) == "⚠️"
+    assert latency_badge(0.59, PAGADOR_P50_THRESHOLD) == "✅"
+    assert latency_badge(0.6, PAGADOR_P50_THRESHOLD) == "🟡"
+    assert latency_badge(0.9, PAGADOR_P50_THRESHOLD) == "🔴"
+    assert latency_badge(1.19, PAGADOR_P95_THRESHOLD) == "✅"
+    assert latency_badge(1.2, PAGADOR_P95_THRESHOLD) == "🟡"
+    assert latency_badge(1.5, PAGADOR_P95_THRESHOLD) == "🔴"
+    assert latency_badge(0.99, RECEBEDOR_P50_THRESHOLD) == "✅"
+    assert latency_badge(1.0, RECEBEDOR_P50_THRESHOLD) == "🟡"
+    assert latency_badge(1.3, RECEBEDOR_P50_THRESHOLD) == "🔴"
+    assert latency_badge(1.99, RECEBEDOR_P95_THRESHOLD) == "✅"
+    assert latency_badge(2.0, RECEBEDOR_P95_THRESHOLD) == "🟡"
+    assert latency_badge(2.4, RECEBEDOR_P95_THRESHOLD) == "🔴"
 
 
 def test_format_revolut_report_healthy() -> None:
@@ -97,5 +115,40 @@ def test_format_revolut_report_warning_and_critical() -> None:
     )
     rendered_crit = format_revolut_report(crit_data)
     assert "Ambiente instável 🔴" in rendered_crit
+    assert "Identificados 2 serviço(s) com erros nos logs e latência fora do limite crítico." in rendered_crit
     assert "spi-main - 250.0 🔴" in rendered_crit
     assert "spi-dispute - 120.0 🔴" in rendered_crit
+
+    recebedor_crit_data = RevolutReportData(
+        date_full="23/11/2026",
+        period_label="10:30h - 13:30h",
+        current_window_label="10:30–13:30",
+        pagador_latency=RevolutLatency(p50_seconds=0.3, p95_seconds=0.7),
+        recebedor_latency=RevolutLatency(p50_seconds=1.4, p95_seconds=2.468),
+        recebedor_pix_by_window=[
+            WindowCount("08:30 à 10:30", 7000),
+            WindowCount("10:30 à 13:30", 14000),
+        ],
+        services_without_errors=[RevolutServiceError("spi-main", 0.0)],
+        next_analysis_label="23/11/2026 às 16:30h",
+    )
+    rendered_rec_crit = format_revolut_report(recebedor_crit_data)
+    assert "Ambiente instável 🔴" in rendered_rec_crit
+    assert "Latência crítica identificada no período (sem erros nos logs)." in rendered_rec_crit
+    assert "1.400s 🔴" in rendered_rec_crit
+    assert "2.468s 🔴" in rendered_rec_crit
+    assert "10:30h - 13:30h  🔴         0                   Não" in rendered_rec_crit
+
+    recebedor_warn_data = RevolutReportData(
+        date_full="23/11/2026",
+        period_label="10:30h - 13:30h",
+        current_window_label="10:30–13:30",
+        pagador_latency=RevolutLatency(p50_seconds=0.3, p95_seconds=0.7),
+        recebedor_latency=RevolutLatency(p50_seconds=1.1, p95_seconds=2.2),
+        services_without_errors=[RevolutServiceError("spi-main", 0.0)],
+        next_analysis_label="23/11/2026 às 16:30h",
+    )
+    rendered_rec_warn = format_revolut_report(recebedor_warn_data)
+    assert "Ambiente em atenção 🟡" in rendered_rec_warn
+    assert "1.100s 🟡" in rendered_rec_warn
+    assert "2.200s 🟡" in rendered_rec_warn

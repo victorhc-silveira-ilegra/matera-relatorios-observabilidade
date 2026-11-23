@@ -74,12 +74,12 @@ def test_prd_warning_branches() -> None:
     d6 = _healthy_report()
     d6.prd.routing_errors_by_window = [WindowCount("08:30–10:30", 10)]
     d6.prd.api_hits_by_window = [WindowCount("08:30–10:30", 10)]
-    d6.prd.saga_total = 15
-    d6.prd.polling_total = 150
+    d6.prd.saga_total = 2500
+    d6.prd.saga_above_5m = 5
     assert evaluate_prd_status(d6).level is HealthLevel.WARNING
 
     d7 = _healthy_report()
-    d7.prd.saga_total = 2
+    d7.prd.saga_total = 1500
     assert evaluate_prd_status(d7).level is HealthLevel.STABLE
 
     d8 = _healthy_report()
@@ -101,16 +101,16 @@ def test_prd_critical_branches() -> None:
     assert evaluate_prd_status(d3).level is HealthLevel.CRITICAL
 
     d4 = _healthy_report()
-    d4.prd.saga_above_5m = 2
+    d4.prd.saga_above_5m = 100
     assert evaluate_prd_status(d4).level is HealthLevel.CRITICAL
 
     d5 = _healthy_report()
     d5.prd.logs = LogDistribution(total=100, counts={"INFO": 40, "ERROR": 60})
-    d5.prd.polling_total = 10000
+    d5.prd.polling_total = 80
     assert evaluate_prd_status(d5).level is HealthLevel.CRITICAL
 
     d6 = _healthy_report()
-    d6.prd.saga_total = 105
+    d6.prd.saga_total = 10000
     assert evaluate_prd_status(d6).level is HealthLevel.CRITICAL
 
     d7 = _healthy_report()

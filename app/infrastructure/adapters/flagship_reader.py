@@ -57,7 +57,8 @@ class FlagshipMetricsAdapter:
         )
         restarts = extract_pod_restarts(
             self._gf_hml.query_prometheus(
-                f'increase(kube_pod_container_status_restarts_total{{namespace="dtw-hml"}}[{window.duration_promql}])',
+                f'increase(kube_pod_container_status_restarts_total{{namespace="dtw-hml"}}[{window.duration_promql}]) '
+                'and kube_pod_container_status_running{namespace="dtw-hml"} > 0',
                 window,
                 instant=True,
             )
@@ -111,7 +112,9 @@ class FlagshipMetricsAdapter:
         )
         restarts = extract_pod_restarts(
             self._gf_prd.query_prometheus(
-                f'increase(kube_pod_container_status_restarts_total{{namespace="dtw-prod"}}[{current_window.duration_promql}])',
+                'increase(kube_pod_container_status_restarts_total{namespace="dtw-prod"}'
+                f"[{current_window.duration_promql}]) "
+                'and kube_pod_container_status_running{namespace="dtw-prod"} > 0',
                 current_window,
                 instant=True,
             )
