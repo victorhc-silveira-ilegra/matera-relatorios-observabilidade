@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.4](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.2.3...v1.2.4) (2026-11-23)
+
+### Correções de Bugs
+
+* **revolut:** marca ambiente em atencao e exibe metrica nos eventos criticos ([4d3b6c2](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/4d3b6c2582f7b0f45f5655d8e3b8bd4f69d82073))
+
 ## [1.2.3](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.2.2...v1.2.3) (2026-11-23)
 
 ### Correções de Bugs
