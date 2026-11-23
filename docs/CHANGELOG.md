@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.3](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.2.2...v1.2.3) (2026-11-23)
+
+### Correções de Bugs
+
+* **reports:** alinha limiares, cores e queries dos relatorios aos paineis reais do grafana ([8c5ea80](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/8c5ea8067cfb7e5f472291d1e3f605c2d6a075d3))
+* **revolut:** exibe status historico real e detalhes dos eventos criticos por horario ([757494f](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/757494fda0b05ad5eaef6b5700db2e53d9f6e484))
+
+### Integração Contínua (CI/CD)
+
+* **linters:** dispara validacao commitlint na main ([3133aba](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/3133abacb110139fbaeec74dc7de911c0c308da4))
+
 ## [1.2.2](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.2.1...v1.2.2) (2026-11-18)
 
 ### Correções de Bugs
