@@ -2,8 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.domain.revolut.models import RevolutLatency, RevolutReportData, RevolutServiceError
+from app.domain.revolut.models import (
+    RevolutHttpError,
+    RevolutLatency,
+    RevolutPodRestart,
+    RevolutReportData,
+    RevolutServiceError,
+)
 from app.domain.time_window import DAILY_WINDOWS, WINDOW_ORDER
+
+HTTP_5XX_CRITICAL_THRESHOLD = 80
+RESTART_CRITICAL_THRESHOLD = 3.0
 
 
 @dataclass(frozen=True)
@@ -64,6 +73,8 @@ def evaluate_revolut_status(
     total_services: int,
     has_ticket: bool,
     services_with_errors: tuple[RevolutServiceError, ...] = (),
+    restarts: tuple[RevolutPodRestart, ...] = (),
+    http_5xx_errors: tuple[RevolutHttpError, ...] = (),
 ) -> RevolutStatusEvaluation:
     pag_p50_badge = latency_badge(pagador_latency.p50_seconds, PAGADOR_P50_THRESHOLD)
     pag_p95_badge = latency_badge(pagador_latency.p95_seconds, PAGADOR_P95_THRESHOLD)
@@ -79,24 +90,34 @@ def evaluate_revolut_status(
     all_latencies_ok = all(b == "✅" for b, _, _ in named_metrics)
     critical_latency_details = tuple(f"{name}: {fmt_duration(val)}" for b, name, val in named_metrics if b == "🔴")
     service_error_details = tuple(f"{s.service}: {fmt_log_val(s.value)}" for s in services_with_errors)
-    critical_details = critical_latency_details + service_error_details
-    critical_events = err_count + len(critical_latency_details)
+    critical_restart_details = tuple(
+        f"{r.pod} restarts: {int(round(r.restarts))}" for r in restarts if r.restarts >= RESTART_CRITICAL_THRESHOLD
+    )
+    critical_5xx_details = tuple(
+        f"{e.service} 5XX: {e.count}" for e in http_5xx_errors if e.count >= HTTP_5XX_CRITICAL_THRESHOLD
+    )
+    critical_details = (
+        critical_latency_details + service_error_details + critical_restart_details + critical_5xx_details
+    )
+    critical_events = (
+        err_count + len(critical_latency_details) + len(critical_restart_details) + len(critical_5xx_details)
+    )
 
-    if critical_latency_details:
+    if critical_latency_details or critical_restart_details or critical_5xx_details:
         status_line = "Ambiente em atenção 🟡 (Ocorrências críticas identificadas no período)."
         if err_count > 0:
             eventos_line = f"Identificados {err_count} serviço(s) com erros nos logs e latência fora do limite crítico."
         else:
-            eventos_line = "Latência crítica identificada no período (sem erros nos logs)."
+            eventos_line = "Ocorrência crítica identificada no período (sem erros nos logs)."
         return RevolutStatusEvaluation(status_line, eventos_line, "🔴", critical_events, critical_details)
 
-    if err_count > 0 or not all_latencies_ok or has_ticket:
+    if err_count > 0 or not all_latencies_ok or has_ticket or restarts or http_5xx_errors:
         if err_count > 0:
             status_line = "Ambiente em atenção 🟡 (Ocorrências nos logs identificadas no período em acompanhamento)."
             eventos_line = f"Identificados {err_count} serviço(s) com erros nos logs em acompanhamento contínuo."
         else:
-            status_line = "Ambiente em atenção 🟡 (Desvio pontual de latência ou chamado ativo em acompanhamento)."
-            eventos_line = "Monitoramento ativo para desvios pontuais de latência ou chamados abertos."
+            status_line = "Ambiente em atenção 🟡 (Desvio pontual identificado ou chamado ativo em acompanhamento)."
+            eventos_line = "Monitoramento ativo para desvios pontuais de latência, restarts, 5XX ou chamados abertos."
         return RevolutStatusEvaluation(status_line, eventos_line, "🟡", critical_events, critical_details)
 
     status_line = (
@@ -136,6 +157,26 @@ def format_revolut_report(data: RevolutReportData) -> str:
         total_services=total_services,
         has_ticket=has_ticket,
         services_with_errors=tuple(data.services_with_errors),
+        restarts=tuple(data.restarts),
+        http_5xx_errors=tuple(data.http_5xx_errors),
+    )
+
+    restart_lines: list[str] = (
+        [
+            f"• **{r.pod}:** {int(round(r.restarts))} restarts "
+            f"{'🔴' if r.restarts >= RESTART_CRITICAL_THRESHOLD else '🟡'}"
+            for r in data.restarts
+        ]
+        if data.restarts
+        else ["Sem ocorrências ✅"]
+    )
+    http_5xx_lines: list[str] = (
+        [
+            f"• **{e.service}:** {fmt_int_br(e.count)} {'🔴' if e.count >= HTTP_5XX_CRITICAL_THRESHOLD else '🟡'}"
+            for e in data.http_5xx_errors
+        ]
+        if data.http_5xx_errors
+        else ["Sem ocorrências ✅"]
     )
 
     rec_lines = [f"{wc.window_label} - {wc.count}" for wc in data.recebedor_pix_by_window]
@@ -155,7 +196,8 @@ def format_revolut_report(data: RevolutReportData) -> str:
 
     status_by_slot = {ws.period_label: ws for ws in data.window_statuses}
     all_slots = [f"{DAILY_WINDOWS[k][0]}h - {DAILY_WINDOWS[k][1]}h" for k in WINDOW_ORDER]
-    resolved_slots: list[tuple[str, str | None, str | None]] = []
+    slot_rows: list[str] = []
+    detail_lines: list[str] = []
     passed_current = False
     for slot in all_slots:
         if not passed_current:
@@ -167,20 +209,12 @@ def format_revolut_report(data: RevolutReportData) -> str:
                 badge, crit, details = ws.badge, ws.critical_events, ws.critical_event_details
             else:
                 badge, crit, details = "✅", 0, ()
-            crit_text = f"{crit} ({', '.join(details)})" if details else str(crit)
-            resolved_slots.append((slot, badge, crit_text))
+            slot_rows.append(f"{slot}  {badge}         {crit:<19} Não")
+            if details:
+                formatted_details = " | ".join(f"{item} 🔴" for item in details)
+                detail_lines.append(f"• **{slot}:** {formatted_details}")
         else:
-            resolved_slots.append((slot, None, None))
-
-    crit_col_width = max(20, max((len(t) for _, _, t in resolved_slots if t is not None), default=0) + 2)
-    slot_rows = [
-        (
-            f"{slot}  {badge}         {crit_text:<{crit_col_width}}Não"
-            if badge is not None and crit_text is not None
-            else slot
-        )
-        for slot, badge, crit_text in resolved_slots
-    ]
+            slot_rows.append(slot)
 
     lines = [
         "📊 **Relatório - Observabilidade | Revolut**",
@@ -218,6 +252,12 @@ def format_revolut_report(data: RevolutReportData) -> str:
         "✅ **Sem Erros:**",
         *without_err_lines,
         "",
+        "🔄 **Restarts de Pods**",
+        *restart_lines,
+        "",
+        "🌐 **Erros HTTP 5XX**",
+        *http_5xx_lines,
+        "",
         "📊 **Resumo:**",
         f"**Total de serviços analisados:** {total_services}",
         f"**Serviços com erro:** {err_count}",
@@ -233,8 +273,9 @@ def format_revolut_report(data: RevolutReportData) -> str:
         data.chamados,
         "",
         "📊 **Status por Horário**",
-        f"Horário          Status    {'Eventos Críticos':<{crit_col_width}}Intervenção Manual",
+        "Horário          Status    Eventos Críticos    Intervenção Manual",
         *slot_rows,
+        *(["", "🔎 **Detalhes dos Eventos Críticos**", *detail_lines] if detail_lines else []),
         "",
         "📌 **Notas Finais**",
         f"Nenhum incidente reportado por clientes. A próxima análise está prevista para {data.next_analysis_label}.",

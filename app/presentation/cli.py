@@ -18,8 +18,9 @@ from app.domain.time_window import (
     detect_current_window,
     windows_up_to,
 )
-from app.infrastructure.adapters.cloudwatch import CloudWatchRdsAdapter
+from app.infrastructure.adapters.cloudwatch import CloudWatchRdsAdapter, FallbackRdsAdapter
 from app.infrastructure.adapters.flagship_reader import FlagshipMetricsAdapter
+from app.infrastructure.adapters.grafana import GrafanaClient
 from app.infrastructure.adapters.output import ConsoleAndFileOutputAdapter
 from app.infrastructure.adapters.revolut_reader import RevolutMetricsAdapter
 from app.infrastructure.logging import (
@@ -85,7 +86,14 @@ def main(argv: list[str] | None = None) -> int:
         )
     else:
         flagship_reader = FlagshipMetricsAdapter(settings)
-        rds_reader = CloudWatchRdsAdapter(settings.cloudwatch_rds_url)
+        rds_reader = FallbackRdsAdapter(
+            CloudWatchRdsAdapter(settings.cloudwatch_rds_url),
+            GrafanaClient(
+                base_url=settings.grafana_prd_base,
+                username=settings.grafana_user,
+                password=settings.grafana_pass,
+            ),
+        )
         flagship_uc = GenerateFlagshipReportUseCase(flagship_reader, rds_reader, output_port)
         flagship_uc.execute(
             GenerateFlagshipReportCommand(

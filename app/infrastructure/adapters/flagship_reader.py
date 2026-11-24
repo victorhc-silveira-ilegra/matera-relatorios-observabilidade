@@ -4,6 +4,7 @@ from app.domain.flagship.models import HmlMetrics, PrdMetrics
 from app.domain.time_window import TimeWindow, WindowCount
 from app.infrastructure.adapters.grafana import (
     GrafanaClient,
+    extract_kafka_lags,
     extract_pod_restarts,
     extract_scalar_from_frames,
 )
@@ -44,7 +45,7 @@ class FlagshipMetricsAdapter:
                 instant=True,
             )
         )
-        lag = extract_scalar_from_frames(
+        lags = extract_kafka_lags(
             self._gf_hml.query_prometheus(
                 'kafka_consumer_group_ConsumerLagMetrics_Value{name="SumOffsetLag"} > 0 '
                 'unless (kafka_consumer_group_ConsumerLagMetrics_Value{name="SumOffsetLag", '
@@ -63,7 +64,7 @@ class FlagshipMetricsAdapter:
                 instant=True,
             )
         )
-        return HmlMetrics(logs=logs, incidents=incidents, lag=lag, restarts=restarts)
+        return HmlMetrics(logs=logs, incidents=incidents, lags=lags, restarts=restarts)
 
     def read_prd(self, current_window: TimeWindow, day_windows: list[TimeWindow]) -> PrdMetrics:
         logs = self._os_prd.fetch_log_distribution(current_window, extra_filters=None)
@@ -99,7 +100,7 @@ class FlagshipMetricsAdapter:
                 instant=True,
             )
         )
-        lag = extract_scalar_from_frames(
+        lags = extract_kafka_lags(
             self._gf_prd.query_prometheus(
                 'kafka_consumer_group_ConsumerLagMetrics_Value{name="SumOffsetLag"} > 0 '
                 'unless (kafka_consumer_group_ConsumerLagMetrics_Value{name="SumOffsetLag", '
@@ -142,16 +143,22 @@ class FlagshipMetricsAdapter:
             datasource_uid="T2rqmE8Sk",
             window=current_window,
         )
+        polling_partitions = self._gf_prd.query_mysql_column(
+            "SELECT PARTITION_NUMBER FROM DTW_TR_POLLING_ENTRY WHERE PROCESSED = 0 GROUP BY PARTITION_NUMBER;",
+            datasource_uid="T2rqmE8Sk",
+            window=current_window,
+        )
 
         return PrdMetrics(
             logs=logs,
             routing_errors_by_window=routing_errors,
             incidents=incidents,
-            lag=lag,
+            lags=lags,
             restarts=restarts,
             saga_total=saga_total,
             saga_above_5m=saga_above_5m,
             polling_processed=polling_processed,
             polling_total=polling_total,
+            polling_partitions=polling_partitions,
             api_hits_by_window=api_hits,
         )

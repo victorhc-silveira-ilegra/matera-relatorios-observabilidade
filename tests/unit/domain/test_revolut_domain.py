@@ -8,7 +8,9 @@ from app.domain.revolut.formatter import (
     latency_badge,
 )
 from app.domain.revolut.models import (
+    RevolutHttpError,
     RevolutLatency,
+    RevolutPodRestart,
     RevolutReportData,
     RevolutServiceError,
     RevolutWindowStatus,
@@ -100,8 +102,8 @@ def test_format_revolut_report_warning_and_critical() -> None:
     rendered_service_warn = format_revolut_report(service_warn_data)
     assert "Ambiente em atenção 🟡" in rendered_service_warn
     assert "Identificados 1 serviço(s) com erros nos logs em acompanhamento contínuo." in rendered_service_warn
-    assert "13:30h - 16:30h  🔴         1 (spi-dispute: 223.7)" not in rendered_service_warn
-    assert "13:30h - 16:30h  🟡         1 (spi-dispute: 223.7)  Não" in rendered_service_warn
+    assert "13:30h - 16:30h  🟡         1                   Não" in rendered_service_warn
+    assert "• **13:30h - 16:30h:** spi-dispute: 223.7 🔴" in rendered_service_warn
 
     crit_data = RevolutReportData(
         date_full="12/11/2026",
@@ -142,12 +144,16 @@ def test_format_revolut_report_warning_and_critical() -> None:
     )
     rendered_rec_crit = format_revolut_report(recebedor_crit_data)
     assert "Ambiente em atenção 🟡 (Ocorrências críticas identificadas no período)." in rendered_rec_crit
-    assert "Latência crítica identificada no período (sem erros nos logs)." in rendered_rec_crit
+    assert "Ocorrência crítica identificada no período (sem erros nos logs)." in rendered_rec_crit
     assert "1.400s 🔴" in rendered_rec_crit
     assert "2.468s 🔴" in rendered_rec_crit
-    assert "08:30h - 10:30h  🔴         1 (Recebedor P50: 1.362s)                         Não" in rendered_rec_crit
-    assert "10:30h - 13:30h  🔴         1 (Recebedor P50: 1.380s)                         Não" in rendered_rec_crit
-    assert "13:30h - 16:30h  🔴         2 (Recebedor P50: 1.400s, Recebedor P95: 2.468s)  Não" in rendered_rec_crit
+    assert "08:30h - 10:30h  🔴         1                   Não" in rendered_rec_crit
+    assert "10:30h - 13:30h  🔴         1                   Não" in rendered_rec_crit
+    assert "13:30h - 16:30h  🔴         2                   Não" in rendered_rec_crit
+    assert "🔎 **Detalhes dos Eventos Críticos**" in rendered_rec_crit
+    assert "• **08:30h - 10:30h:** Recebedor P50: 1.362s 🔴" in rendered_rec_crit
+    assert "• **10:30h - 13:30h:** Recebedor P50: 1.380s 🔴" in rendered_rec_crit
+    assert "• **13:30h - 16:30h:** Recebedor P50: 1.400s 🔴 | Recebedor P95: 2.468s 🔴" in rendered_rec_crit
 
     recebedor_warn_data = RevolutReportData(
         date_full="23/11/2026",
@@ -162,3 +168,23 @@ def test_format_revolut_report_warning_and_critical() -> None:
     assert "Ambiente em atenção 🟡" in rendered_rec_warn
     assert "1.100s 🟡" in rendered_rec_warn
     assert "2.200s 🟡" in rendered_rec_warn
+    assert "Sem ocorrências ✅" in rendered_rec_warn
+
+    restarts_5xx_data = RevolutReportData(
+        date_full="24/11/2026",
+        period_label="08:30h - 10:30h",
+        current_window_label="08:30–10:30",
+        pagador_latency=RevolutLatency(p50_seconds=0.3, p95_seconds=0.7),
+        recebedor_latency=RevolutLatency(p50_seconds=0.5, p95_seconds=1.0),
+        services_without_errors=[RevolutServiceError("spi-main", 0.0)],
+        restarts=[RevolutPodRestart("spi-main-abc", 3.0), RevolutPodRestart("spi-msg-xyz", 1.0)],
+        http_5xx_errors=[RevolutHttpError("spi-main", 85), RevolutHttpError("spi-qrcodes1", 5)],
+        next_analysis_label="24/11/2026 às 13:30h",
+    )
+    rendered_r5 = format_revolut_report(restarts_5xx_data)
+    assert "• **spi-main-abc:** 3 restarts 🔴" in rendered_r5
+    assert "• **spi-msg-xyz:** 1 restarts 🟡" in rendered_r5
+    assert "• **spi-main:** 85 🔴" in rendered_r5
+    assert "• **spi-qrcodes1:** 5 🟡" in rendered_r5
+    assert "08:30h - 10:30h  🔴         2                   Não" in rendered_r5
+    assert "• **08:30h - 10:30h:** spi-main-abc restarts: 3 🔴 | spi-main 5XX: 85 🔴" in rendered_r5

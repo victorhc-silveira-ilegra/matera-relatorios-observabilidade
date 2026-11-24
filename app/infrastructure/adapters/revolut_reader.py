@@ -4,7 +4,9 @@ from typing import Any
 
 from app.domain.revolut.formatter import evaluate_revolut_status
 from app.domain.revolut.models import (
+    RevolutHttpError,
     RevolutLatency,
+    RevolutPodRestart,
     RevolutReportData,
     RevolutServiceError,
     RevolutWindowStatus,
@@ -13,6 +15,7 @@ from app.domain.time_window import TimeWindow, WindowCount
 from app.infrastructure.adapters.grafana import (
     GrafanaClient,
     clean_float,
+    extract_pod_restarts,
     extract_scalar_from_frames,
 )
 from app.infrastructure.settings import Settings
@@ -39,7 +42,7 @@ LOG_M5_NORMALIZED_MAX = 100.0
 LOG_CURR_NORMALIZED_MAX = 25.0
 
 
-def extract_services_map(frames: list[dict[str, Any]]) -> dict[str, float]:
+def extract_label_map(frames: list[dict[str, Any]], label_key: str) -> dict[str, float]:
     result: dict[str, float] = {}
     for frame in frames:
         fields = frame.get("schema", {}).get("fields", [])
@@ -47,13 +50,17 @@ def extract_services_map(frames: list[dict[str, Any]]) -> dict[str, float]:
         if len(fields) < 2 or len(values) < 2 or not values[1]:
             continue
         labels = fields[1].get("labels", {})
-        svc = labels.get("service")
-        if not svc:
+        key_val = labels.get(label_key)
+        if not key_val:
             continue
         non_null = [float(v) for v in values[1] if v is not None]
         if non_null:
-            result[str(svc)] = non_null[-1]
+            result[str(key_val)] = result.get(str(key_val), 0.0) + non_null[-1]
     return result
+
+
+def extract_services_map(frames: list[dict[str, Any]]) -> dict[str, float]:
+    return extract_label_map(frames, "service")
 
 
 class RevolutMetricsAdapter:
@@ -67,51 +74,41 @@ class RevolutMetricsAdapter:
             proxy=settings.revolut_http_proxy or None,
         )
 
+    def _query_scalar(self, expr: str, window: TimeWindow) -> float | None:
+        return clean_float(extract_scalar_from_frames(self._gf.query_prometheus(expr, window, instant=True)))
+
     def _collect_window_metrics(
         self,
         window: TimeWindow,
-    ) -> tuple[RevolutLatency, RevolutLatency, list[RevolutServiceError], list[RevolutServiceError]]:
+    ) -> tuple[
+        RevolutLatency,
+        RevolutLatency,
+        list[RevolutServiceError],
+        list[RevolutServiceError],
+        list[RevolutPodRestart],
+        list[RevolutHttpError],
+    ]:
         dur = window.duration_promql
 
-        pagador_p50 = clean_float(
-            extract_scalar_from_frames(
-                self._gf.query_prometheus(
-                    "histogram_quantile(0.5, sum by (le) (rate(payment_execution_seconds_bucket"
-                    f'{{service="spi-main",namespace="{NAMESPACE}"}}[{dur}])))',
-                    window,
-                    instant=True,
-                )
-            )
+        pagador_p50 = self._query_scalar(
+            "histogram_quantile(0.5, sum by (le) (rate(payment_execution_seconds_bucket"
+            f'{{service="spi-main",namespace="{NAMESPACE}"}}[{dur}])))',
+            window,
         )
-        pagador_p95 = clean_float(
-            extract_scalar_from_frames(
-                self._gf.query_prometheus(
-                    "histogram_quantile(0.95, sum by (le) (rate(payment_execution_seconds_bucket"
-                    f'{{service="spi-main",namespace="{NAMESPACE}"}}[{dur}])))',
-                    window,
-                    instant=True,
-                )
-            )
+        pagador_p95 = self._query_scalar(
+            "histogram_quantile(0.95, sum by (le) (rate(payment_execution_seconds_bucket"
+            f'{{service="spi-main",namespace="{NAMESPACE}"}}[{dur}])))',
+            window,
         )
-        recebedor_p50 = clean_float(
-            extract_scalar_from_frames(
-                self._gf.query_prometheus(
-                    "histogram_quantile(0.5, sum by (le) (rate(credit_validation_seconds_bucket"
-                    f'{{eventType="receipt",namespace="{NAMESPACE}"}}[{dur}])))',
-                    window,
-                    instant=True,
-                )
-            )
+        recebedor_p50 = self._query_scalar(
+            "histogram_quantile(0.5, sum by (le) (rate(credit_validation_seconds_bucket"
+            f'{{eventType="receipt",namespace="{NAMESPACE}"}}[{dur}])))',
+            window,
         )
-        recebedor_p95 = clean_float(
-            extract_scalar_from_frames(
-                self._gf.query_prometheus(
-                    "histogram_quantile(0.95, sum by (le) (rate(credit_validation_seconds_bucket"
-                    f'{{eventType="receipt",namespace="{NAMESPACE}"}}[{dur}])))',
-                    window,
-                    instant=True,
-                )
-            )
+        recebedor_p95 = self._query_scalar(
+            "histogram_quantile(0.95, sum by (le) (rate(credit_validation_seconds_bucket"
+            f'{{eventType="receipt",namespace="{NAMESPACE}"}}[{dur}])))',
+            window,
         )
 
         err_frames = self._gf.query_prometheus(
@@ -154,11 +151,38 @@ class RevolutMetricsAdapter:
             else:
                 without_errors.append(RevolutServiceError(service=svc, value=val))
 
+        raw_restarts = extract_pod_restarts(
+            self._gf.query_prometheus(
+                f'increase(kube_pod_container_status_restarts_total{{namespace="{NAMESPACE}"}}[{dur}]) '
+                f'and kube_pod_container_status_running{{namespace="{NAMESPACE}"}} > 0',
+                window,
+                instant=True,
+            )
+        )
+        restarts = [RevolutPodRestart(pod=r.pod, restarts=r.restarts) for r in raw_restarts]
+
+        raw_5xx = extract_label_map(
+            self._gf.query_prometheus(
+                "sum by (job) (increase(http_server_requests_seconds_count"
+                f'{{namespace="{NAMESPACE}",status=~"5.."}}[{dur}])) > 0',
+                window,
+                instant=True,
+            ),
+            label_key="job",
+        )
+        http_5xx = [
+            RevolutHttpError(service=svc, count=int(round(cnt)))
+            for svc, cnt in sorted(raw_5xx.items(), key=lambda kv: kv[1], reverse=True)
+            if int(round(cnt)) > 0
+        ]
+
         return (
             RevolutLatency(p50_seconds=pagador_p50, p95_seconds=pagador_p95),
             RevolutLatency(p50_seconds=recebedor_p50, p95_seconds=recebedor_p95),
             with_errors,
             without_errors,
+            restarts,
+            http_5xx,
         )
 
     def read_revolut(
@@ -181,32 +205,24 @@ class RevolutMetricsAdapter:
         current_rec_latency = RevolutLatency()
         current_with_errors: list[RevolutServiceError] = []
         current_without_errors: list[RevolutServiceError] = []
+        current_restarts: list[RevolutPodRestart] = []
+        current_http_5xx: list[RevolutHttpError] = []
 
         for w in day_windows:
             w_dur = w.duration_promql
-            rec_val = clean_float(
-                extract_scalar_from_frames(
-                    self._gf.query_prometheus(
-                        f'sum(increase(incoming_messages_item_seconds_count{{eventType="receipt",messageType="pacs.008",namespace="{NAMESPACE}"}}[{w_dur}]))',
-                        w,
-                        instant=True,
-                    )
-                )
+            rec_val = self._query_scalar(
+                f'sum(increase(incoming_messages_item_seconds_count{{eventType="receipt",messageType="pacs.008",namespace="{NAMESPACE}"}}[{w_dur}]))',
+                w,
             )
-            pag_val = clean_float(
-                extract_scalar_from_frames(
-                    self._gf.query_prometheus(
-                        f'sum(increase(payment_execution_seconds_count{{service="spi-main",namespace="{NAMESPACE}"}}[{w_dur}]))',
-                        w,
-                        instant=True,
-                    )
-                )
+            pag_val = self._query_scalar(
+                f'sum(increase(payment_execution_seconds_count{{service="spi-main",namespace="{NAMESPACE}"}}[{w_dur}]))',
+                w,
             )
             w_label = f"{w.start_brt.strftime('%H:%M')} à {w.end_brt.strftime('%H:%M')}"
             recebedor_pix.append(WindowCount(w_label, int(round(rec_val or 0))))
             pagador_pix.append(WindowCount(w_label, int(round(pag_val or 0))))
 
-            pag_lat, rec_lat, w_with_err, w_without_err = self._collect_window_metrics(w)
+            pag_lat, rec_lat, w_with_err, w_without_err, w_restarts, w_5xx = self._collect_window_metrics(w)
             w_period_label = f"{w.start_brt.strftime('%H:%M')}h - {w.end_brt.strftime('%H:%M')}h"
             eval_res = evaluate_revolut_status(
                 pagador_latency=pag_lat,
@@ -215,6 +231,8 @@ class RevolutMetricsAdapter:
                 total_services=len(w_with_err) + len(w_without_err),
                 has_ticket=has_ticket if w.key == current_window.key else False,
                 services_with_errors=tuple(w_with_err),
+                restarts=tuple(w_restarts),
+                http_5xx_errors=tuple(w_5xx),
             )
             window_statuses.append(
                 RevolutWindowStatus(
@@ -229,6 +247,8 @@ class RevolutMetricsAdapter:
                 current_rec_latency = rec_lat
                 current_with_errors = w_with_err
                 current_without_errors = w_without_err
+                current_restarts = w_restarts
+                current_http_5xx = w_5xx
 
         date_full = current_window.end_brt.strftime("%d/%m/%Y")
         end_hhmm = current_window.end_brt.strftime("%H:%M")
@@ -250,6 +270,8 @@ class RevolutMetricsAdapter:
             pagador_pix_by_window=pagador_pix,
             services_with_errors=current_with_errors,
             services_without_errors=current_without_errors,
+            restarts=current_restarts,
+            http_5xx_errors=current_http_5xx,
             window_statuses=window_statuses,
             chamados=chamados,
             next_analysis_label=next_label,

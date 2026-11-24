@@ -89,15 +89,6 @@ def evaluate_prd_status(data: FlagshipReportData) -> EnvironmentStatus:
     if prd.api_hits_by_window and prd.api_hits_by_window[-1].count >= API_HITS_WARNING_THRESHOLD:
         warning_reasons.append("API Hits recorrentes de erro em dtw-transaction-api")
 
-    if prd.lag is not None:
-        if prd.lag >= LAG_CRITICAL_THRESHOLD:
-            critical_reasons.append(f"Lag massivo ({prd.lag:.0f})")
-        elif prd.lag >= LAG_WARNING_THRESHOLD:
-            warning_reasons.append(f"Lag moderado ({prd.lag:.0f})")
-
-    if prd.incidents is not None and prd.incidents >= INCIDENT_WARNING_THRESHOLD:
-        warning_reasons.append(f"Incidentes elevados ({prd.incidents:.0f})")
-
     max_restarts = max((r.restarts for r in prd.restarts), default=0.0)
     if max_restarts >= RESTART_CRITICAL_THRESHOLD:
         critical_reasons.append(f"Crash loop em pod (restarts={max_restarts:.2f})")
@@ -141,19 +132,9 @@ def evaluate_prd_status(data: FlagshipReportData) -> EnvironmentStatus:
 
 
 def evaluate_hml_status(data: FlagshipReportData) -> EnvironmentStatus:
-    critical_reasons: list[str] = []
     warning_reasons: list[str] = []
 
     hml = data.hml
-
-    if hml.lag is not None:
-        if hml.lag >= LAG_CRITICAL_THRESHOLD:
-            critical_reasons.append(f"Lag massivo ({hml.lag:.0f})")
-        elif hml.lag >= LAG_WARNING_THRESHOLD:
-            warning_reasons.append(f"Lag moderado ({hml.lag:.0f})")
-
-    if hml.incidents is not None and hml.incidents >= INCIDENT_WARNING_THRESHOLD:
-        warning_reasons.append(f"Incidentes elevados em HML ({hml.incidents:.0f})")
 
     max_restarts = max((r.restarts for r in hml.restarts), default=0.0)
     if max_restarts >= RESTART_CRITICAL_THRESHOLD:
@@ -164,8 +145,6 @@ def evaluate_hml_status(data: FlagshipReportData) -> EnvironmentStatus:
     if has_active_ticket(data.chamados_hml):
         warning_reasons.append("Chamado ativo em HML")
 
-    if critical_reasons:
-        return EnvironmentStatus(HealthLevel.CRITICAL, critical_reasons)
     if warning_reasons:
         return EnvironmentStatus(HealthLevel.WARNING, warning_reasons)
     return EnvironmentStatus(HealthLevel.STABLE, [])

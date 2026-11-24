@@ -2,9 +2,14 @@ import math
 from typing import Any
 
 from app.domain.flagship.models import LogDistribution
-from app.infrastructure.adapters.cloudwatch import build_windowed_url, parse_rds_metric_data
+from app.infrastructure.adapters.cloudwatch import (
+    build_windowed_url,
+    parse_rds_metric_data,
+    parse_rds_prometheus_frames,
+)
 from app.infrastructure.adapters.grafana import (
     clean_float,
+    extract_kafka_lags,
     extract_pod_restarts,
     extract_scalar_from_frames,
 )
@@ -30,6 +35,39 @@ def test_extract_scalar_from_frames() -> None:
     assert extract_scalar_from_frames([{"data": {"values": [[1], [None]]}}]) is None
     assert extract_scalar_from_frames([{"data": {"values": []}}]) is None
     assert extract_scalar_from_frames([]) is None
+
+
+def test_extract_kafka_lags() -> None:
+    frames: list[dict[str, Any]] = [
+        {
+            "schema": {
+                "fields": [
+                    {"name": "Time"},
+                    {"name": "Value", "labels": {"topic": "t-b", "groupId": "g-b"}},
+                ]
+            },
+            "data": {"values": [[1], [759.0]]},
+        },
+        {
+            "schema": {
+                "fields": [
+                    {"name": "Time"},
+                    {"name": "Value", "labels": {"topic": "t-a", "groupId": "g-a"}},
+                ]
+            },
+            "data": {"values": [[1], [19699.0]]},
+        },
+        {
+            "schema": {"fields": [{"name": "Time"}, {"name": "Value", "labels": {"topic": "t-zero"}}]},
+            "data": {"values": [[1], [0.0]]},
+        },
+        {"schema": {"fields": [{"name": "Time"}]}, "data": {"values": [[1]]}},
+    ]
+    lags = extract_kafka_lags(frames)
+    assert [(item.topic, item.group_id, item.lag) for item in lags] == [
+        ("t-a", "g-a", 19699.0),
+        ("t-b", "g-b", 759.0),
+    ]
 
 
 def test_extract_pod_restarts() -> None:
@@ -86,6 +124,49 @@ def test_parse_rds_metric_data() -> None:
     assert rds.instances[2].current_pct is None
     assert len(rds.peaks_above_90) == 1
     assert rds.peaks_above_90[0].points_above_90 == 1
+
+    rds_prom = parse_rds_prometheus_frames(
+        [
+            {
+                "schema": {
+                    "fields": [
+                        {"name": "Time"},
+                        {
+                            "name": "Value",
+                            "labels": {"dimension_DBInstanceIdentifier": "dtw-prod-cluster-transaction-1"},
+                        },
+                    ]
+                },
+                "data": {"values": [[1, 2], [44.0, 91.5]]},
+            },
+            {
+                "schema": {
+                    "fields": [
+                        {"name": "Time"},
+                        {
+                            "name": "Value",
+                            "labels": {"dimension_DBInstanceIdentifier": "dtw-prod-cluster-entrypoints-1"},
+                        },
+                    ]
+                },
+                "data": {"values": [[1], []]},
+            },
+            {
+                "schema": {
+                    "fields": [
+                        {"name": "Time"},
+                        {"name": "Value", "labels": {"dimension_DBInstanceIdentifier": "unrelated-db"}},
+                    ]
+                },
+                "data": {"values": [[1], [50.0]]},
+            },
+            {"schema": {"fields": [{"name": "Time"}]}, "data": {"values": [[1]]}},
+        ]
+    )
+    assert [i.name for i in rds_prom.instances] == ["transaction-1", "entrypoints-1"]
+    assert rds_prom.instances[0].current_pct == 91.5
+    assert rds_prom.instances[1].current_pct is None
+    assert len(rds_prom.peaks_above_90) == 1
 
 
 def test_build_windowed_url() -> None:

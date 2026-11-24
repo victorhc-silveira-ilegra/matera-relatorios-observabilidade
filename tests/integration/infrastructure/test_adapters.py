@@ -102,6 +102,8 @@ def test_http_clients_with_mocks(monkeypatch: pytest.MonkeyPatch) -> None:
     assert gf_client.query_mysql_scalar("SELECT EMPTY", "ds", w) is None
     assert gf_client.query_mysql_scalar("SELECT NO_FRAMES", "ds", w) is None
     assert gf_client.query_mysql_scalar("SELECT EMPTY_VALUES", "ds", w) is None
+    assert gf_client.query_mysql_column("SELECT 1", "ds", w) == [7]
+    assert gf_client.query_mysql_column("SELECT EMPTY_VALUES", "ds", w) == []
 
 
 def test_flagship_and_revolut_adapters(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -136,6 +138,9 @@ def test_flagship_and_revolut_adapters(monkeypatch: pytest.MonkeyPatch) -> None:
 
         def query_mysql_scalar(self, raw_sql: str, datasource_uid: str, window: TimeWindow) -> int:
             return 0
+
+        def query_mysql_column(self, raw_sql: str, datasource_uid: str, window: TimeWindow) -> list[int]:
+            return [1]
 
     monkeypatch.setattr(fl_mod, "OpenSearchClient", FakeOS)
     monkeypatch.setattr(fl_mod, "GrafanaClient", FakeGF)
@@ -278,3 +283,36 @@ def test_cloudwatch_adapter_with_mock_playwright(monkeypatch: pytest.MonkeyPatch
     monkeypatch.setattr(cw_mod, "sync_playwright", make_pw([]))
     res_fail = adapter.read_rds_cpu(w)
     assert res_fail.error is not None
+
+    class FakeGrafanaProm:
+        def __init__(self, frames: list[dict[str, Any]]) -> None:
+            self._frames = frames
+
+        def query_prometheus(
+            self, expr: str, window: TimeWindow, instant: bool = False, datasource_uid: str = "prometheus"
+        ) -> list[dict[str, Any]]:
+            return self._frames
+
+    prom_frames = [
+        {
+            "schema": {
+                "fields": [
+                    {"name": "Time"},
+                    {"name": "Value", "labels": {"dimension_DBInstanceIdentifier": "dtw-prod-cluster-transaction-1"}},
+                ]
+            },
+            "data": {"values": [[1], [33.0]]},
+        }
+    ]
+    fb_ok = cw_mod.FallbackRdsAdapter(adapter, FakeGrafanaProm(prom_frames))  # type: ignore[arg-type]
+    assert fb_ok.read_rds_cpu(w).instances[0].current_pct == 33.0
+
+    fb_empty = cw_mod.FallbackRdsAdapter(adapter, FakeGrafanaProm([]))  # type: ignore[arg-type]
+    assert fb_empty.read_rds_cpu(w).error is not None
+
+    monkeypatch.setattr(
+        cw_mod,
+        "sync_playwright",
+        make_pw([FakeResp("https://monitoring.sa-east-1.amazonaws.com/", "POST", 200, ok_json)]),
+    )
+    assert fb_ok.read_rds_cpu(w).instances[0].current_pct == 42.0

@@ -6,9 +6,11 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from playwright.sync_api import Response, sync_playwright
 
+from app.application.ports import RdsMetricsReader
 from app.domain.flagship.models import RdsInstanceCpu, RdsMetrics
 from app.domain.flagship.status import RDS_CPU_CRITICAL_PCT
 from app.domain.time_window import TimeWindow
+from app.infrastructure.adapters.grafana import GrafanaClient
 
 RDS_DISPLAY_NAMES: dict[str, str] = {
     "dtw-prod-cluster-transaction-1": "transaction-1",
@@ -63,6 +65,62 @@ def parse_rds_metric_data(payload: dict[str, Any]) -> RdsMetrics:
     instances.sort(key=lambda i: i.current_pct if i.current_pct is not None else -1.0, reverse=True)
     peaks_above_90.sort(key=lambda i: i.peak_pct if i.peak_pct is not None else -1.0, reverse=True)
     return RdsMetrics(peaks_above_90=peaks_above_90, instances=instances)
+
+
+def parse_rds_prometheus_frames(frames: list[dict[str, Any]]) -> RdsMetrics:
+    instances: list[RdsInstanceCpu] = []
+    peaks_above_90: list[RdsInstanceCpu] = []
+
+    for frame in frames:
+        fields = frame.get("schema", {}).get("fields", [])
+        values_cols = frame.get("data", {}).get("values", [])
+        if len(fields) < 2 or len(values_cols) < 2:
+            continue
+        raw_label = str(fields[1].get("labels", {}).get("dimension_DBInstanceIdentifier", ""))
+        if raw_label not in RDS_DISPLAY_NAMES:
+            continue
+        display_name = RDS_DISPLAY_NAMES[raw_label]
+        values = [float(v) for v in values_cols[1] if v is not None]
+        if not values:
+            instances.append(RdsInstanceCpu(name=display_name, current_pct=None, peak_pct=None))
+            continue
+
+        current_val = values[-1]
+        peak_val = max(values)
+        points_above_90 = sum(1 for v in values if v >= RDS_CPU_CRITICAL_PCT)
+        inst = RdsInstanceCpu(
+            name=display_name,
+            current_pct=round(current_val, 3),
+            peak_pct=round(peak_val, 3),
+            points_above_90=points_above_90,
+        )
+        instances.append(inst)
+        if peak_val >= RDS_CPU_CRITICAL_PCT:
+            peaks_above_90.append(inst)
+
+    instances.sort(key=lambda i: i.current_pct if i.current_pct is not None else -1.0, reverse=True)
+    peaks_above_90.sort(key=lambda i: i.peak_pct if i.peak_pct is not None else -1.0, reverse=True)
+    return RdsMetrics(peaks_above_90=peaks_above_90, instances=instances)
+
+
+class FallbackRdsAdapter:
+    def __init__(self, primary: RdsMetricsReader, grafana_client: GrafanaClient) -> None:
+        self._primary = primary
+        self._grafana = grafana_client
+
+    def read_rds_cpu(self, window: TimeWindow) -> RdsMetrics:
+        result = self._primary.read_rds_cpu(window)
+        if not result.error:
+            return result
+        frames = self._grafana.query_prometheus(
+            'avg_over_time(aws_rds_cpuutilization_average{dimension_DBInstanceIdentifier=~"^dtw.*|^matinc.*"}[5m])',
+            window,
+            instant=False,
+        )
+        fallback = parse_rds_prometheus_frames(frames)
+        if fallback.instances:
+            return fallback
+        return result
 
 
 class CloudWatchRdsAdapter:

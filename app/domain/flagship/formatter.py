@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.domain.flagship.models import FlagshipReportData, PodRestart
+from app.domain.flagship.models import FlagshipReportData, KafkaLag, PodRestart
 from app.domain.flagship.status import (
     INCIDENT_WARNING_THRESHOLD,
     LAG_CRITICAL_THRESHOLD,
@@ -58,12 +58,30 @@ def lag_badge(val: float | None) -> str:
     return "🟢"
 
 
+def fmt_lag_block(lags: list[KafkaLag]) -> list[str]:
+    relevant = [item for item in lags if item.lag > LAG_IGNORE_THRESHOLD]
+    if not relevant:
+        return []
+    lines = ["⚠️ **Lag Kafka**  "]
+    for idx, item in enumerate(relevant):
+        if idx > 0:
+            lines.append("")
+        lines.append(f"{lag_badge(item.lag)} **{fmt_num(item.lag)}**  ")
+        if item.group_id:
+            lines.append(f"**Tópico:** {item.topic}  ")
+            lines.append(f"**Grupo:** {item.group_id}")
+        else:
+            lines.append(f"**Tópico:** {item.topic}")
+    return lines
+
+
 def fmt_restarts_block(title: str, restarts: list[PodRestart]) -> list[str]:
     if not restarts:
         return [f"**{title}:** Sem ocorrências"]
-    lines = [f"**{title}:**"]
+    lines = [f"🔄 **{title}**  "]
     for r in restarts:
-        lines.append(f"- {r.pod} (Restarts = {int(round(r.restarts))})")
+        lines.append(f"• **{r.pod}:** {int(round(r.restarts))} restarts  ")
+    lines[-1] = lines[-1].rstrip()
     return lines
 
 
@@ -89,8 +107,9 @@ def format_flagship_report(data: FlagshipReportData) -> str:
         "",
         f"**Incidentes (últimos 30 min):** {hml_inc_txt}{inc_badge(data.hml.incidents)}",
     ]
-    if data.hml.lag is not None and data.hml.lag > LAG_IGNORE_THRESHOLD:
-        hml_lines.extend(["", f"**Lag:** {fmt_num(data.hml.lag)} {lag_badge(data.hml.lag)}"])
+    hml_lag_lines = fmt_lag_block(data.hml.lags)
+    if hml_lag_lines:
+        hml_lines.extend(["", *hml_lag_lines])
     hml_lines.extend(["", *fmt_restarts_block("Restarts", data.hml.restarts)])
     sections.append("\n".join(hml_lines))
 
@@ -118,8 +137,9 @@ def format_flagship_report(data: FlagshipReportData) -> str:
         "",
         f"**Incidentes (últimos 30 min):** {prd_inc_txt}{inc_badge(data.prd.incidents)}",
     ]
-    if data.prd.lag is not None and data.prd.lag > LAG_IGNORE_THRESHOLD:
-        prd_lines.extend(["", f"**Lag:** {fmt_num(data.prd.lag)} {lag_badge(data.prd.lag)}"])
+    prd_lag_lines = fmt_lag_block(data.prd.lags)
+    if prd_lag_lines:
+        prd_lines.extend(["", *prd_lag_lines])
     prd_lines.extend(["", *fmt_restarts_block("Restarts", data.prd.restarts)])
     sections.append("\n".join(prd_lines))
 
@@ -158,10 +178,18 @@ def format_flagship_report(data: FlagshipReportData) -> str:
         "📥 **Tabela DTW_TR_POLLING_ENTRY**",
         f"**Registros PROCESSED:** {fmt_int(data.prd.polling_processed)} {polling_badge}  ",
         f"**Total de registros:** {fmt_int(data.prd.polling_total)} {polling_emoji}",
-        "",
-        "📈 **API Hits — dtw-transaction-api**",
-        *api_lines,
     ]
+    if data.prd.polling_partitions:
+        parts_txt = ", ".join(str(p) for p in data.prd.polling_partitions)
+        dados_lines[-1] = f"{dados_lines[-1]}  "
+        dados_lines.append(f"**Partição em uso:** {parts_txt}")
+    dados_lines.extend(
+        [
+            "",
+            "📈 **API Hits — dtw-transaction-api**",
+            *api_lines,
+        ]
+    )
     sections.append("\n".join(dados_lines))
 
     rds_lines = [

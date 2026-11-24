@@ -18,6 +18,18 @@ class RevolutServiceError:
 
 
 @dataclass(frozen=True)
+class RevolutPodRestart:
+    pod: str
+    restarts: float
+
+
+@dataclass(frozen=True)
+class RevolutHttpError:
+    service: str
+    count: int
+
+
+@dataclass(frozen=True)
 class RevolutWindowStatus:
     period_label: str
     badge: str
@@ -37,6 +49,8 @@ class RevolutReportData:
     pagador_pix_by_window: list[WindowCount] = field(default_factory=list)
     services_with_errors: list[RevolutServiceError] = field(default_factory=list)
     services_without_errors: list[RevolutServiceError] = field(default_factory=list)
+    restarts: list[RevolutPodRestart] = field(default_factory=list)
+    http_5xx_errors: list[RevolutHttpError] = field(default_factory=list)
     window_statuses: list[RevolutWindowStatus] = field(default_factory=list)
     chamados: str = "Sem ocorrências."
     next_analysis_label: str = ""

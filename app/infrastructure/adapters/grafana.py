@@ -5,7 +5,7 @@ from typing import Any
 
 import httpx
 
-from app.domain.flagship.models import PodRestart
+from app.domain.flagship.models import KafkaLag, PodRestart
 from app.domain.time_window import TimeWindow
 
 
@@ -28,6 +28,26 @@ def extract_scalar_from_frames(frames: list[dict[str, Any]]) -> float | None:
     return total if found else None
 
 
+def extract_kafka_lags(frames: list[dict[str, Any]]) -> list[KafkaLag]:
+    lags_by_key: dict[tuple[str, str], float] = {}
+    for frame in frames:
+        fields = frame.get("schema", {}).get("fields", [])
+        values = frame.get("data", {}).get("values", [])
+        if len(fields) < 2 or len(values) < 2 or not values[1]:
+            continue
+        labels = fields[1].get("labels", {})
+        topic = str(labels.get("topic") or "unknown")
+        group_id = str(labels.get("groupId") or "")
+        non_null = [float(v) for v in values[1] if v is not None]
+        if non_null and non_null[-1] > 0:
+            key = (topic, group_id)
+            lags_by_key[key] = lags_by_key.get(key, 0.0) + non_null[-1]
+
+    result = [KafkaLag(topic=topic, group_id=group_id, lag=val) for (topic, group_id), val in lags_by_key.items()]
+    result.sort(key=lambda item: item.lag, reverse=True)
+    return result
+
+
 def extract_pod_restarts(frames: list[dict[str, Any]]) -> list[PodRestart]:
     restarts_by_pod: dict[str, float] = {}
     for frame in frames:
@@ -36,7 +56,7 @@ def extract_pod_restarts(frames: list[dict[str, Any]]) -> list[PodRestart]:
         if len(fields) < 2 or len(values) < 2 or not values[1]:
             continue
         labels = fields[1].get("labels", {})
-        pod_name = str(labels.get("pod") or labels.get("pod_name") or "unknown")
+        pod_name = str(labels.get("pod") or labels.get("pod_name") or labels.get("container") or "unknown")
         val = values[1][-1]
         if val is not None and float(val) > 0:
             restarts_by_pod[pod_name] = restarts_by_pod.get(pod_name, 0.0) + float(val)
@@ -87,12 +107,12 @@ class GrafanaClient:
         frames: list[dict[str, Any]] = data.get("results", {}).get("A", {}).get("frames", [])
         return frames
 
-    def query_mysql_scalar(
+    def _query_mysql_frames(
         self,
         raw_sql: str,
         datasource_uid: str,
         window: TimeWindow,
-    ) -> int | None:
+    ) -> list[dict[str, Any]]:
         payload: dict[str, Any] = {
             "queries": [
                 {
@@ -111,9 +131,30 @@ class GrafanaClient:
             data = resp.json()
 
         frames: list[dict[str, Any]] = data.get("results", {}).get("A", {}).get("frames", [])
-        for frame in frames:
+        return frames
+
+    def query_mysql_scalar(
+        self,
+        raw_sql: str,
+        datasource_uid: str,
+        window: TimeWindow,
+    ) -> int | None:
+        for frame in self._query_mysql_frames(raw_sql, datasource_uid, window):
             values = frame.get("data", {}).get("values", [])
             if values and values[0]:
                 val = values[0][0]
                 return int(val) if val is not None else None
         return None
+
+    def query_mysql_column(
+        self,
+        raw_sql: str,
+        datasource_uid: str,
+        window: TimeWindow,
+    ) -> list[int]:
+        result: list[int] = []
+        for frame in self._query_mysql_frames(raw_sql, datasource_uid, window):
+            values = frame.get("data", {}).get("values", [])
+            if values and values[0]:
+                result.extend(int(v) for v in values[0] if v is not None)
+        return result

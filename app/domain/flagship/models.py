@@ -25,11 +25,18 @@ class PodRestart:
     restarts: float
 
 
+@dataclass(frozen=True)
+class KafkaLag:
+    topic: str
+    group_id: str
+    lag: float
+
+
 @dataclass
 class HmlMetrics:
     logs: LogDistribution = field(default_factory=LogDistribution)
     incidents: float | None = None
-    lag: float | None = None
+    lags: list[KafkaLag] = field(default_factory=list)
     restarts: list[PodRestart] = field(default_factory=list)
 
 
@@ -38,12 +45,13 @@ class PrdMetrics:
     logs: LogDistribution = field(default_factory=LogDistribution)
     routing_errors_by_window: list[WindowCount] = field(default_factory=list)
     incidents: float | None = None
-    lag: float | None = None
+    lags: list[KafkaLag] = field(default_factory=list)
     restarts: list[PodRestart] = field(default_factory=list)
     saga_total: int | None = None
     saga_above_5m: int | None = None
     polling_processed: int | None = None
     polling_total: int | None = None
+    polling_partitions: list[int] = field(default_factory=list)
     api_hits_by_window: list[WindowCount] = field(default_factory=list)
 
 

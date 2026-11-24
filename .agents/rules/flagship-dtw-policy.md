@@ -53,7 +53,6 @@ Janelas cumulativas de erros (`routing_errors`) e chamadas de API (`api_hits`) e
 ### Producao (PRD)
 - **🔴 Instavel**:
   - `ERROR >= 20%` nos logs de producao.
-  - `lag >= 1000` no Kafka.
   - Crash loop em pods (`restarts >= 3.0`).
   - SAGA com integracoes estagnadas criticas (`acima de 5 min >= 100`) ou fila acumulada critica (`total >= 10000`).
   - Tabela Polling com volume critico (`PROCESSED >= 10.500.000` ou `total pendente >= 80`).
@@ -61,17 +60,16 @@ Janelas cumulativas de erros (`routing_errors`) e chamadas de API (`api_hits`) e
 - **🟡 Atencao**:
   - `5% <= ERROR < 20%` ou `WARN >= 20%`.
   - Erros recorrentes em producer (`routing_errors >= 10`) ou API hits (`api_hits >= 10`).
-  - Lag moderado (`500 <= lag < 1000`).
   - Restarts pontuais (`0 < restarts < 3.0`).
   - SAGA com integracoes acima de 5 min (`1 <= acima_5m < 100`) ou fila acumulada em atencao (`2000 <= total < 10000`).
   - Tabela Polling com volume elevado (`8.500.000 <= PROCESSED < 10.500.000`).
   - RDS CPU com pico pontual (`1 <= pontos < 3`).
   - Chamado ativo informado em `--chamados-prd`.
-- **🟢 Estavel**: Quando nenhum dos criterios acima e atingido (ex.: `lag < 500`, `SAGA total < 2000`, `acima_5m == 0`, `Polling pendente < 80`, sem picos de CPU).
+- **🟢 Estavel**: Quando nenhum dos criterios acima e atingido (ex.: `SAGA total < 2000`, `acima_5m == 0`, `Polling pendente < 80`, sem picos de CPU). Lag Kafka e Incidentes sao exibidos com seus badges individuais na secao `Outras Metricas` apenas como indicadores informativos, sem degradar o status geral.
 
 ### Homologacao (HML)
-- **🔴 Instavel**: Exclusivamente por Lag massivo no Kafka (`lag >= 1000`). Erros de log e restarts de pods nao caracterizam instabilidade em homologacao.
-- **🟡 Atencao**: Lag moderado (`500 <= lag < 1000`), restarts de pods (`restarts > 0`) ou chamados ativos em HML.
+- **🔴 Instavel**: Nao aplicavel por metricas automaticas de HML (erros de log, lag e incidentes nao caracterizam instabilidade).
+- **🟡 Atencao**: Restarts de pods (`restarts > 0`) ou chamados ativos em HML.
 - **🟢 Estavel**: Operacao normal.
 
 ---
