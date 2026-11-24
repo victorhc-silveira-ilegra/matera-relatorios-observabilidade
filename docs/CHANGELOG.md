@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.0](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.2.4...v1.3.0) (2026-11-24)
+
+### Novas Funcionalidades
+
+* **reports:** adiciona fallback rds, particao polling, restarts, 5xx e melhora ux ([8df573d](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/8df573dd2630704c0ab9280a479e234f7b1e350f))
+
+### Refatorações
+
+* **domain:** centraliza thresholds da flagship, avalia incidentes e deriva slots da revolut ([5b8056c](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/5b8056ca1751bc78c209b6504ccd185afe4c7c02))
+
 ## [1.2.4](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.2.3...v1.2.4) (2026-11-23)
 
 ### Correções de Bugs
