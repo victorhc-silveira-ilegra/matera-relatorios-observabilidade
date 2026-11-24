@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.1](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.3.0...v1.3.1) (2026-11-24)
+
+### Correções de Bugs
+
+* **infra:** usa range com intervalMs em queries timeseries do grafana ([58f1b32](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/58f1b32351001a27a43da356300df3a9a29d3377))
+
 ## [1.3.0](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.2.4...v1.3.0) (2026-11-24)
 
 ### Novas Funcionalidades
