@@ -98,6 +98,7 @@ def test_http_clients_with_mocks(monkeypatch: pytest.MonkeyPatch) -> None:
 
     gf_client = gf_mod.GrafanaClient("https://gf.local", "u", "p")
     assert len(gf_client.query_prometheus("up", w)) == 1
+    assert len(gf_client.query_prometheus("up", w, instant=False)) == 1
     assert gf_client.query_mysql_scalar("SELECT 1", "ds", w) == 7
     assert gf_client.query_mysql_scalar("SELECT EMPTY", "ds", w) is None
     assert gf_client.query_mysql_scalar("SELECT NO_FRAMES", "ds", w) is None

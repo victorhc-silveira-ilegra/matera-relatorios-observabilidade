@@ -53,7 +53,7 @@ class FlagshipMetricsAdapter:
                 'kafka_consumer_group_ConsumerLagMetrics_Value{name="SumOffsetLag", '
                 'groupId=~".*msk.canary.group.broker.*"} > 0)',
                 window,
-                instant=True,
+                instant=False,
             )
         )
         restarts = extract_pod_restarts(
@@ -61,7 +61,7 @@ class FlagshipMetricsAdapter:
                 f'increase(kube_pod_container_status_restarts_total{{namespace="dtw-hml"}}[{window.duration_promql}]) '
                 'and kube_pod_container_status_running{namespace="dtw-hml"} > 0',
                 window,
-                instant=True,
+                instant=False,
             )
         )
         return HmlMetrics(logs=logs, incidents=incidents, lags=lags, restarts=restarts)
@@ -108,7 +108,7 @@ class FlagshipMetricsAdapter:
                 'kafka_consumer_group_ConsumerLagMetrics_Value{name="SumOffsetLag", '
                 'groupId=~".*msk.canary.group.broker.*"} > 0)',
                 current_window,
-                instant=True,
+                instant=False,
             )
         )
         restarts = extract_pod_restarts(
@@ -117,7 +117,7 @@ class FlagshipMetricsAdapter:
                 f"[{current_window.duration_promql}]) "
                 'and kube_pod_container_status_running{namespace="dtw-prod"} > 0',
                 current_window,
-                instant=True,
+                instant=False,
             )
         )
         saga_total = self._gf_prd.query_mysql_scalar(

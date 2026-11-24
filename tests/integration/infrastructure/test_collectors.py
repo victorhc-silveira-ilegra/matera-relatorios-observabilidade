@@ -74,7 +74,7 @@ def test_extract_pod_restarts() -> None:
     frames: list[dict[str, Any]] = [
         {
             "schema": {"fields": [{"name": "Time"}, {"name": "Value", "labels": {"pod": "pod-a"}}]},
-            "data": {"values": [[1], [2.96]]},
+            "data": {"values": [[1, 2], [2.96, None]]},
         },
         {
             "schema": {"fields": [{"name": "Time"}, {"name": "Value", "labels": {"pod": "pod-b"}}]},

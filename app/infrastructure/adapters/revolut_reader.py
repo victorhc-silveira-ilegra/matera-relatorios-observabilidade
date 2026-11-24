@@ -156,7 +156,7 @@ class RevolutMetricsAdapter:
                 f'increase(kube_pod_container_status_restarts_total{{namespace="{NAMESPACE}"}}[{dur}]) '
                 f'and kube_pod_container_status_running{{namespace="{NAMESPACE}"}} > 0',
                 window,
-                instant=True,
+                instant=False,
             )
         )
         restarts = [RevolutPodRestart(pod=r.pod, restarts=r.restarts) for r in raw_restarts]

@@ -57,9 +57,9 @@ def extract_pod_restarts(frames: list[dict[str, Any]]) -> list[PodRestart]:
             continue
         labels = fields[1].get("labels", {})
         pod_name = str(labels.get("pod") or labels.get("pod_name") or labels.get("container") or "unknown")
-        val = values[1][-1]
-        if val is not None and float(val) > 0:
-            restarts_by_pod[pod_name] = restarts_by_pod.get(pod_name, 0.0) + float(val)
+        non_null = [float(v) for v in values[1] if v is not None]
+        if non_null and non_null[-1] > 0:
+            restarts_by_pod[pod_name] = restarts_by_pod.get(pod_name, 0.0) + non_null[-1]
 
     result = [PodRestart(pod=pod, restarts=round(val, 2)) for pod, val in restarts_by_pod.items() if round(val, 2) > 0]
     result.sort(key=lambda r: r.restarts, reverse=True)
@@ -87,16 +87,18 @@ class GrafanaClient:
         instant: bool = True,
         datasource_uid: str = "prometheus",
     ) -> list[dict[str, Any]]:
+        query_obj: dict[str, Any] = {
+            "refId": "A",
+            "datasource": {"type": "prometheus", "uid": datasource_uid},
+            "expr": expr,
+            "instant": instant,
+            "range": not instant,
+        }
+        if not instant:
+            query_obj["intervalMs"] = 60000
+            query_obj["maxDataPoints"] = 1000
         payload: dict[str, Any] = {
-            "queries": [
-                {
-                    "refId": "A",
-                    "datasource": {"type": "prometheus", "uid": datasource_uid},
-                    "expr": expr,
-                    "instant": instant,
-                    "range": not instant,
-                }
-            ],
+            "queries": [query_obj],
             "from": str(window.start_ms),
             "to": str(window.end_ms),
         }
