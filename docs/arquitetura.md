@@ -53,7 +53,8 @@ flowchart TD
      - `OpenSearchClient`: Consultas de agregacao de logs no OpenSearch Dashboards (HML e PRD).
      - `GrafanaClient`: Consultas PromQL e MySQL contra Grafana, com suporte a proxies HTTP.
      - `CloudWatchRdsAdapter`: Extracao de metricas de CPU de instancias RDS via scraping headless (Playwright).
-     - `FlagshipMetricsReader` e `RevolutMetricsReader`: Adaptadores compostos que orquestram leituras heterogeneas.
+     - `FlagshipMetricsReader` e `RevolutMetricsReader`: Adaptadores compostos que orquestram leituras heterogeneas com bypass granular por painel via `resilience.safe_collect`.
+     - `resilience.py`: Traducao de excecoes (`describe_error`) e isolamento de falhas parciais (`safe_collect`) para evitar interrupcao do relatorio.
      - `OutputPort`: Publicacao dos relatorios gerados no `stdout` ou persistencia em arquivo.
    - Carregamento de configuracoes e variaveis de ambiente (`Settings`).
    - Logging semantico sanitizado (`log_event`).
