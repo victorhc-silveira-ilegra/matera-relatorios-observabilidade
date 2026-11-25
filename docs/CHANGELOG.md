@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.0](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.3.1...v1.4.0) (2026-11-25)
+
+### Novas Funcionalidades
+
+* **infra:** adiciona bypass resiliente de coleta e tratamento amigavel de erros ([be9062d](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/be9062dac3caa0854988f7345703dc4361351e94))
+
+### Documentação
+
+* **infra:** documenta bypass resiliente de coleta na arquitetura ([82e11bf](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/commit/82e11bfce03cddecb654fc068dd2220084fc1509))
+
 ## [1.3.1](https://github.com/victorhc-silveira-ilegra/matera-relatorios-observabilidade/compare/v1.3.0...v1.3.1) (2026-11-24)
 
 ### Correções de Bugs
