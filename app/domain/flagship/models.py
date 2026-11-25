@@ -38,6 +38,7 @@ class HmlMetrics:
     incidents: float | None = None
     lags: list[KafkaLag] = field(default_factory=list)
     restarts: list[PodRestart] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -53,6 +54,7 @@ class PrdMetrics:
     polling_total: int | None = None
     polling_partitions: list[int] = field(default_factory=list)
     api_hits_by_window: list[WindowCount] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -80,3 +82,4 @@ class FlagshipReportData:
     rds: RdsMetrics = field(default_factory=RdsMetrics)
     chamados_hml: str = "Sem ocorrências."
     chamados_prd: str = "Sem ocorrências."
+    collection_warnings: list[str] = field(default_factory=list)

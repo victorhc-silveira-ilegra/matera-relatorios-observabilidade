@@ -54,3 +54,4 @@ class RevolutReportData:
     window_statuses: list[RevolutWindowStatus] = field(default_factory=list)
     chamados: str = "Sem ocorrências."
     next_analysis_label: str = ""
+    collection_warnings: list[str] = field(default_factory=list)

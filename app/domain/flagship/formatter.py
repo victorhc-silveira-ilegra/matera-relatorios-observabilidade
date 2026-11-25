@@ -239,4 +239,9 @@ def format_flagship_report(data: FlagshipReportData) -> str:
     ]
     sections.append("\n".join(status_lines))
 
+    if data.collection_warnings:
+        warn_lines = ["⚠️ **AVISOS DE COLETA**", *[f"• {w}  " for w in data.collection_warnings]]
+        warn_lines[-1] = warn_lines[-1].rstrip()
+        sections.append("\n".join(warn_lines))
+
     return sep.join(sections)

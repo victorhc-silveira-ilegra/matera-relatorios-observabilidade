@@ -89,3 +89,13 @@ def test_cli_entrypoint(monkeypatch: pytest.MonkeyPatch) -> None:
     with pytest.raises(SystemExit) as exc_info:
         runpy.run_module("app.presentation.cli", run_name="__main__")
     assert exc_info.value.code == 0
+
+
+def test_cli_fatal_error(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    def _boom() -> object:
+        raise RuntimeError("falha de configuração")
+
+    monkeypatch.setattr(cli_mod, "load_settings", _boom)
+    assert cli_mod.main(["--client", "flagship", "--window", "08:30-10:30"]) == 1
+    captured = capsys.readouterr()
+    assert "Erro: Não foi possível gerar relatório no cliente flagship por falha de configuração." in captured.err

@@ -138,9 +138,12 @@ def test_format_report_variants() -> None:
             saga_above_5m=100,
         ),
         rds=RdsMetrics(error="Falha RDS"),
+        collection_warnings=["Não foi possível gerar dashboard de Lag HML no cliente Flagship por HTTP 400."],
     )
     rendered_err = format_flagship_report(data_err)
     assert "Erro na coleta: Falha RDS" in rendered_err
+    assert "⚠️ **AVISOS DE COLETA**" in rendered_err
+    assert "• Não foi possível gerar dashboard de Lag HML no cliente Flagship por HTTP 400." in rendered_err
     assert "🟢 **50**  \n**Tópico:** prd.topic  \n**Grupo:** prd-grp" in rendered_err
     assert "**Registros PROCESSED:** 11.000.000 🔴" in rendered_err
     assert "**Total de integrações:** 10.000 🔴" in rendered_err

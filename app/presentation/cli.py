@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 from datetime import date, datetime
 from pathlib import Path
 
@@ -22,9 +23,11 @@ from app.infrastructure.adapters.cloudwatch import CloudWatchRdsAdapter, Fallbac
 from app.infrastructure.adapters.flagship_reader import FlagshipMetricsAdapter
 from app.infrastructure.adapters.grafana import GrafanaClient
 from app.infrastructure.adapters.output import ConsoleAndFileOutputAdapter
+from app.infrastructure.adapters.resilience import describe_error
 from app.infrastructure.adapters.revolut_reader import RevolutMetricsAdapter
 from app.infrastructure.logging import (
     REPORT_GENERATION_COMPLETED,
+    REPORT_GENERATION_FAILED,
     REPORT_GENERATION_STARTED,
     configure_logging,
     log_event,
@@ -55,6 +58,25 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     logger = configure_logging()
+    try:
+        return _run_cli(args, logger)
+    except Exception as exc:
+        reason = describe_error(exc)
+        log_event(
+            logger,
+            logging.ERROR,
+            REPORT_GENERATION_FAILED,
+            client=args.client,
+            reason=reason,
+        )
+        print(
+            f"Erro: Não foi possível gerar relatório no cliente {args.client} por {reason}.",
+            file=sys.stderr,
+        )
+        return 1
+
+
+def _run_cli(args: argparse.Namespace, logger: logging.Logger) -> int:
     settings = load_settings()
 
     target_date = date.fromisoformat(args.date) if args.date else datetime.now(BRT).date()

@@ -317,3 +317,97 @@ def test_cloudwatch_adapter_with_mock_playwright(monkeypatch: pytest.MonkeyPatch
         make_pw([FakeResp("https://monitoring.sa-east-1.amazonaws.com/", "POST", 200, ok_json)]),
     )
     assert fb_ok.read_rds_cpu(w).instances[0].current_pct == 42.0
+
+    class BoomPrimary:
+        def read_rds_cpu(self, window: TimeWindow) -> Any:
+            raise RuntimeError("pw crash")
+
+    class BoomGrafana:
+        def query_prometheus(
+            self, expr: str, window: TimeWindow, instant: bool = False, datasource_uid: str = "prometheus"
+        ) -> list[dict[str, Any]]:
+            raise RuntimeError("prom down")
+
+    fb_boom = cw_mod.FallbackRdsAdapter(BoomPrimary(), BoomGrafana())  # type: ignore[arg-type]
+    res_boom = fb_boom.read_rds_cpu(w)
+    assert res_boom.error == "Não foi possível gerar dashboard de RDS CPU no cliente Flagship por prom down."
+
+
+def test_resilience_describe_and_safe_collect() -> None:
+    import logging
+
+    import httpx
+    from app.infrastructure.adapters.resilience import describe_error, safe_collect
+
+    req = httpx.Request("POST", "https://example.test/api/ds/query")
+    resp_json = httpx.Response(
+        400,
+        request=req,
+        json={"results": {"A": {"error": "connect: connection refused"}}},
+    )
+    assert describe_error(httpx.HTTPStatusError("400", request=req, response=resp_json)) == (
+        "HTTP 400 (connect: connection refused)"
+    )
+    resp_no_dict = httpx.Response(502, request=req, json={"results": []})
+    assert describe_error(httpx.HTTPStatusError("502", request=req, response=resp_no_dict)) == "HTTP 502"
+    resp_empty_err = httpx.Response(500, request=req, json={"results": {"A": {"other": 1}}})
+    assert describe_error(httpx.HTTPStatusError("500", request=req, response=resp_empty_err)) == "HTTP 500"
+    resp_text = httpx.Response(503, request=req, text="Service Unavailable")
+    assert describe_error(httpx.HTTPStatusError("503", request=req, response=resp_text)) == (
+        "HTTP 503 (Service Unavailable)"
+    )
+    assert describe_error(httpx.ReadTimeout("timed out", request=req)) == "timeout (timed out)"
+    assert describe_error(httpx.ConnectError("refused", request=req)) == "erro de conexão (refused)"
+    assert describe_error(RuntimeError("boom")) == "boom"
+    assert describe_error(RuntimeError("")) == "RuntimeError"
+
+    warnings: list[str] = []
+    logger = logging.getLogger("test_resilience")
+    assert safe_collect("Lag HML", "Flagship", lambda: 42, 0, warnings, logger) == 42
+    assert warnings == []
+
+    def _fail() -> int:
+        raise RuntimeError("falha")
+
+    assert safe_collect("Lag HML", "Flagship", _fail, 0, warnings, logger) == 0
+    assert safe_collect("Lag HML", "Flagship", _fail, 0, warnings, None) == 0
+    assert warnings == ["Não foi possível gerar dashboard de Lag HML no cliente Flagship por falha."]
+
+
+def test_adapters_bypass_on_partial_failure() -> None:
+    from app.domain.flagship.models import HmlMetrics
+    from app.infrastructure.adapters.flagship_reader import FlagshipMetricsAdapter
+    from app.infrastructure.adapters.revolut_reader import RevolutMetricsAdapter
+
+    settings = Settings(
+        kibana_hml_user="u",
+        kibana_hml_pass="p",
+        kibana_prd_user="u",
+        kibana_prd_pass="p",
+        grafana_user="u",
+        grafana_pass="p",
+        opensearch_hml_base="https://os-hml",
+        opensearch_prd_base="https://os-prd",
+        grafana_hml_base="https://gf-hml",
+        grafana_prd_base="https://gf-prd",
+        cloudwatch_rds_url="https://cw",
+        grafana_revolut_user="u",
+        grafana_revolut_pass="p",
+    )
+    w = build_time_window(date(2026, 11, 12), "08:30-10:30")
+
+    class BoomGf:
+        def query_prometheus(self, *args: Any, **kwargs: Any) -> list[dict[str, Any]]:
+            raise RuntimeError("conn refused")
+
+    flagship = FlagshipMetricsAdapter(settings)
+    flagship._gf_hml = BoomGf()  # type: ignore[assignment]
+    flagship._os_hml = type("OkOs", (), {"fetch_log_distribution": lambda self, *a, **kw: HmlMetrics().logs})()
+    hml = flagship.read_hml(w)
+    assert hml.incidents is None
+    assert len(hml.warnings) == 3
+
+    revolut = RevolutMetricsAdapter(settings)
+    revolut._gf = BoomGf()  # type: ignore[assignment]
+    rev = revolut.read_revolut(w, [w], "Victor", "Sem ocorrências.")
+    assert len(rev.collection_warnings) >= 1

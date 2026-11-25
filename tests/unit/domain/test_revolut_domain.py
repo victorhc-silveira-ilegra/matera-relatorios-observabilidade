@@ -180,8 +180,11 @@ def test_format_revolut_report_warning_and_critical() -> None:
         restarts=[RevolutPodRestart("spi-main-abc", 3.0), RevolutPodRestart("spi-msg-xyz", 1.0)],
         http_5xx_errors=[RevolutHttpError("spi-main", 85), RevolutHttpError("spi-qrcodes1", 5)],
         next_analysis_label="24/11/2026 às 13:30h",
+        collection_warnings=["Não foi possível gerar dashboard de Logs SPI no cliente Revolut por timeout."],
     )
     rendered_r5 = format_revolut_report(restarts_5xx_data)
+    assert "⚠️ **Avisos de Coleta**" in rendered_r5
+    assert "• Não foi possível gerar dashboard de Logs SPI no cliente Revolut por timeout." in rendered_r5
     assert "• **spi-main-abc:** 3 restarts 🔴" in rendered_r5
     assert "• **spi-msg-xyz:** 1 restarts 🟡" in rendered_r5
     assert "• **spi-main:** 85 🔴" in rendered_r5

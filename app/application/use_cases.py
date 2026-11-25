@@ -42,6 +42,7 @@ class GenerateFlagshipReportUseCase:
         else:
             rds = self._rds_reader.read_rds_cpu(command.current_window)
 
+        merged_warnings = list(dict.fromkeys([*hml.warnings, *prd.warnings]))
         report_data = FlagshipReportData(
             date_label=command.current_window.date_label,
             hour_label=command.current_window.end_hour_label,
@@ -51,6 +52,7 @@ class GenerateFlagshipReportUseCase:
             rds=rds,
             chamados_hml=command.chamados_hml,
             chamados_prd=command.chamados_prd,
+            collection_warnings=merged_warnings,
         )
         rendered = format_flagship_report(report_data)
         self._output_port.write(rendered)

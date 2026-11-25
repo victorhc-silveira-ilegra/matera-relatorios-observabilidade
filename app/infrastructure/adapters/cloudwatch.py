@@ -11,6 +11,7 @@ from app.domain.flagship.models import RdsInstanceCpu, RdsMetrics
 from app.domain.flagship.status import RDS_CPU_CRITICAL_PCT
 from app.domain.time_window import TimeWindow
 from app.infrastructure.adapters.grafana import GrafanaClient
+from app.infrastructure.adapters.resilience import describe_error
 
 RDS_DISPLAY_NAMES: dict[str, str] = {
     "dtw-prod-cluster-transaction-1": "transaction-1",
@@ -109,17 +110,27 @@ class FallbackRdsAdapter:
         self._grafana = grafana_client
 
     def read_rds_cpu(self, window: TimeWindow) -> RdsMetrics:
-        result = self._primary.read_rds_cpu(window)
+        try:
+            result = self._primary.read_rds_cpu(window)
+        except Exception as exc:
+            result = RdsMetrics(
+                error=f"Não foi possível gerar dashboard de RDS CPU no cliente Flagship por {describe_error(exc)}."
+            )
         if not result.error:
             return result
-        frames = self._grafana.query_prometheus(
-            'avg_over_time(aws_rds_cpuutilization_average{dimension_DBInstanceIdentifier=~"^dtw.*|^matinc.*"}[5m])',
-            window,
-            instant=False,
-        )
-        fallback = parse_rds_prometheus_frames(frames)
-        if fallback.instances:
-            return fallback
+        try:
+            frames = self._grafana.query_prometheus(
+                'avg_over_time(aws_rds_cpuutilization_average{dimension_DBInstanceIdentifier=~"^dtw.*|^matinc.*"}[5m])',
+                window,
+                instant=False,
+            )
+            fallback = parse_rds_prometheus_frames(frames)
+            if fallback.instances:
+                return fallback
+        except Exception as exc:
+            return RdsMetrics(
+                error=f"Não foi possível gerar dashboard de RDS CPU no cliente Flagship por {describe_error(exc)}."
+            )
         return result
 
 

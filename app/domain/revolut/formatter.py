@@ -279,5 +279,10 @@ def format_revolut_report(data: RevolutReportData) -> str:
         "",
         "📌 **Notas Finais**",
         f"Nenhum incidente reportado por clientes. A próxima análise está prevista para {data.next_analysis_label}.",
+        *(
+            ["", "⚠️ **Avisos de Coleta**", *[f"• {w}" for w in data.collection_warnings]]
+            if data.collection_warnings
+            else []
+        ),
     ]
     return "\n".join(lines)
